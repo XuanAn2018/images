@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MES Finder Pro - Secure Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #334155;
+            --text-sub: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        
+        body { background: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* Layout Structure */
+        .app-container { display: flex; flex: 1; height: 100%; overflow: hidden; }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 300px; background: var(--bg-card); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; padding: 20px; z-index: 10;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.03); flex-shrink: 0;
+        }
+        
+        .brand { font-size: 1.25rem; font-weight: 800; color: var(--primary); margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+        
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-sub); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .form-control {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px;
+            font-size: 0.95rem; transition: all 0.2s; background: #f1f5f9; color: var(--text-main);
+        }
+        .form-control:focus { outline: none; border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        
+        .btn {
+            width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: white; margin-top: 10px; }
+        .btn-primary:hover { background: var(--primary-dark); }
+
+        /* Auth Box & Status */
+        .auth-box {
+            margin-top: auto; padding: 12px; background: #eff6ff; border: 1px solid #bfdbfe; 
+            border-radius: 6px; font-size: 0.8rem; color: #1e40af;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .btn-logout { background: none; border: none; color: #dc2626; cursor: pointer; font-weight: 700; font-size: 0.8rem; }
+        .btn-logout:hover { text-decoration: underline; }
+
+        /* Main Area */
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        
+        .top-bar {
+            background: var(--bg-card); padding: 0 25px; height: 60px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+        }
+        
+        .tabs { display: flex; gap: 25px; height: 100%; }
+        .tab {
+            background: none; border: none; height: 100%; padding: 0 5px; cursor: pointer;
+            font-weight: 500; color: var(--text-sub); border-bottom: 3px solid transparent; transition: all 0.2s;
+        }
+        .tab:hover { color: var(--primary); }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 700; }
+
+        .content-area { flex: 1; padding: 25px; overflow-y: auto; background: var(--bg-body); }
+        .tab-pane { display: none; animation: fadeIn 0.3s ease; }
+        .tab-pane.active { display: block; }
+
+        /* Gallery Grid */
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .img-card {
+            background: var(--bg-card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: transform 0.2s;
+        }
+        .img-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); border-color: var(--primary); }
+        
+        .img-box {
+            height: 200px; background: #e2e8f0; position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .img-box img { width: 100%; height: 100%; object-fit: contain; }
+        .img-info { padding: 12px; border-top: 1px solid var(--border); }
+        .img-name { font-weight: 600; font-size: 0.85rem; margin-bottom: 5px; word-break: break-all; color: var(--text-main); }
+        
+        /* Stats Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-box { background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .stat-val { font-size: 1.8rem; font-weight: 700; color: var(--primary); margin-bottom: 5px; }
+        .stat-label { font-size: 0.85rem; color: var(--text-sub); font-weight: 500; }
+
+        /* INFO DETAIL (CSS Grid) */
+        .info-card { background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .info-header { padding: 15px 20px; background: #f8fafc; border-bottom: 1px solid var(--border); font-weight: 700; color: var(--text-main); }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            border-bottom: 1px solid var(--border);
+        }
+        .info-grid:last-child { border-bottom: none; }
+        
+        .info-label {
+            background: #fcfcfc; padding: 12px 20px; font-weight: 600; color: var(--text-sub);
+            border-right: 1px solid var(--border); display: flex; align-items: center; font-size: 0.9rem;
+        }
+        .info-value {
+            padding: 12px 20px; color: var(--text-main); font-family: 'Consolas', monospace;
+            font-size: 0.95rem; word-break: break-all; display: flex; align-items: center;
+        }
+
+        /* Tables */
+        .table-wrapper { overflow-x: auto; max-height: 70vh; border: 1px solid var(--border); border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; white-space: nowrap; background: var(--bg-card); }
+        th { background: #f1f5f9; padding: 12px 15px; text-align: left; font-weight: 600; color: var(--text-sub); position: sticky; top: 0; z-index: 5; border-bottom: 1px solid var(--border); }
+        td { padding: 10px 15px; border-bottom: 1px solid var(--border); color: var(--text-main); }
+        tr:hover td { background: #f8fafc; }
+        
+        .badge { padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
+        .badge-success { background: #dcfce7; color: #15803d; }
+        .badge-warning { background: #fef3c7; color: #b45309; }
+        .badge-danger { background: #fee2e2; color: #b91c1c; }
+        
+        .btn-icon { text-decoration: none; font-size: 1.2rem; transition: transform 0.2s; display: inline-block; cursor: pointer; }
+        .btn-icon:hover { transform: scale(1.2); }
+
+        /* Loading */
+        .loading { position: fixed; inset: 0; background: rgba(255,255,255,0.8); display: none; place-items: center; z-index: 100; backdrop-filter: blur(2px); }
+        .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .app-container { flex-direction: column; overflow: auto; }
+            .sidebar { width: 100%; height: auto; }
+            .info-grid { grid-template-columns: 1fr; }
+            .info-label { border-right: none; border-bottom: 1px dashed var(--border); background: #f8fafc; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="brand">🏭 MES Finder Pro</div>
+
+            <div class="input-group">
+                <label>Chế độ tìm kiếm</label>
+                <select id="searchType" class="form-control">
+                    <option value="style">Style Code</option>
+                    <option value="package">Package Code</option>
+                    <option value="search">Tìm tên Style</option>
+                </select>
+            </div>
+
+            <div id="styleInput" class="input-group">
+                <label>Style Code</label>
+                <input type="text" id="styleCode" class="form-control" placeholder="VD: ONR0112" value="ONR0112">
+            </div>
+
+            <div id="packageInput" class="input-group" style="display: none;">
+                <label>Package Code</label>
+                <input type="text" id="packageCode" class="form-control" placeholder="Dán mã Package vào đây...">
+            </div>
+
+            <div id="searchInput" class="input-group" style="display: none;">
+                <label>Từ khóa</label>
+                <input type="text" id="searchQuery" class="form-control" placeholder="Nhập tên style...">
+            </div>
+
+            <button id="searchBtn" class="btn btn-primary">🔍 Tìm Kiếm</button>
+
+            <!-- AUTH STATUS BOX -->
+            <div class="auth-box" id="authBox" style="display: none;">
+                <div>
+                    <div>🔐 Secured</div>
+                    <div style="font-size:0.7rem; opacity:0.8">Reqs: <span id="reqCount">0</span></div>
+                </div>
+                <button class="btn-logout" onclick="logout()">Thoát</button>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main">
+            <div id="loadingOverlay" class="loading">
+                <div style="text-align: center;">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 15px; font-weight: 600; color: var(--text-sub);">Đang tải dữ liệu...</p>
+                </div>
+            </div>
+
+            <div class="top-bar">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('images')">🖼️ Gallery Ảnh</button>
+                    <button class="tab" onclick="switchTab('info')">📋 Thông Tin Style</button>
+                    <button class="tab" onclick="switchTab('packages')">📦 Danh Sách Package</button>
+                </div>
+                <div id="headerInfo" style="font-size: 0.9rem; font-weight: 600; color: var(--text-sub);"></div>
+            </div>
+
+            <div class="content-area">
+                <!-- TAB: IMAGES -->
+                <div id="tab-images" class="tab-pane active">
+                    <div id="galleryResult">
+                        <div style="text-align: center; margin-top: 80px; color: var(--text-sub);">
+                            <div style="font-size: 3rem; margin-bottom: 10px; opacity: 0.3;">🖼️</div>
+                            <p>Nhập mã Style hoặc Package để xem ảnh</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: INFO -->
+                <div id="tab-info" class="tab-pane">
+                    <div id="infoResult"></div>
+                </div>
+
+                <!-- TAB: PACKAGES -->
+                <div id="tab-packages" class="tab-pane">
+                    <div id="packagesResult"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================= CONFIGURATION =================
+        const CONFIG = {
+            // Link Vercel của bạn
+            WORKER_URL: "https://mes-proxy.vercel.app/api"
+        };
+
+        let state = { reqCount: 0 };
+        let userToken = localStorage.getItem('mes_token') || '';
+
+        // ================= INIT & AUTH =================
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            
+            // Events
+            document.getElementById('searchType').addEventListener('change', handleInputSwitch);
+            document.getElementById('searchBtn').addEventListener('click', doSearch);
+            document.addEventListener('keypress', e => { if(e.key === 'Enter') doSearch() });
+        });
+
+        function checkAuth() {
+            if (!userToken) {
+                // Prompt hỏi mật khẩu
+                const pass = prompt("🔒 Hệ thống bảo mật\nVui lòng nhập Mật Khẩu Truy Cập:");
+                if (pass) {
+                    userToken = pass;
+                    localStorage.setItem('mes_token', userToken);
+                    showAuthUI();
+                } else {
+                    document.body.innerHTML = `
+                        <div style="height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#f8fafc; color:#334155;">
+                            <h1 style="font-size:3rem; margin-bottom:10px;">⛔</h1>
+                            <h2>Truy cập bị từ chối</h2>
+                            <p>Bạn cần có mật khẩu để sử dụng hệ thống này.</p>
+                            <button onclick="location.reload()" style="margin-top:20px; padding:10px 20px; background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer;">Nhập lại mật khẩu</button>
+                        </div>
+                    `;
+                }
+            } else {
+                showAuthUI();
+            }
+        }
+
+        function showAuthUI() {
+            document.getElementById('authBox').style.display = 'flex';
+        }
+
+        function logout() {
+            if(confirm("Bạn muốn đăng xuất khỏi hệ thống?")) {
+                localStorage.removeItem('mes_token');
+                location.reload();
+            }
+        }
+
+        // ================= API CALL (SECURE) =================
+        async function fetchAPI(endpoint) {
+            state.reqCount++;
+            document.getElementById('reqCount').innerText = state.reqCount;
+            
+            const url = CONFIG.WORKER_URL + endpoint;
+            
+            try {
+                const res = await fetch(url, {
+                    headers: {
+                        'x-access-token': userToken // Gửi token lên server
+                    }
+                });
+
+                if (res.status === 401) {
+                    alert("⛔ Mật khẩu sai hoặc đã thay đổi! Vui lòng đăng nhập lại.");
+                    logout();
+                    throw new Error("Unauthorized");
+                }
+
+                if (res.ok) {
+                    return await res.json();
+                } else {
+                    throw new Error(`Server lỗi: ${res.status}`);
+                }
+            } catch(e) {
+                console.error(e);
+                throw e;
+            }
+        }
+
+        // ================= LOGIC & RENDER =================
+        // Phần này giữ nguyên logic hiển thị thông minh của v3.1
+        // nhưng đã được cập nhật để sử dụng fetchAPI bảo mật
+
+        const fmt = {
+            date: (str) => {
+                if (!str) return '';
+                if (str.includes('-')) {
+                    try {
+                        const d = new Date(str);
+                        return isNaN(d.getTime()) ? str : d.toLocaleString('vi-VN').slice(0, 16).replace(',', '');
+                    } catch(e) { return str; }
+                }
+                if (str.length === 8 && !isNaN(str)) {
+                    return `${str.substring(6,8)}/${str.substring(4,6)}/${str.substring(0,4)}`;
+                }
+                return str;
+            },
+            number: (num) => num ? num.toLocaleString('en-US') : '0',
+            status: (st) => {
+                if(st === 'CF' || st === 'OK') return `<span class="badge badge-success">${st}</span>`;
+                return `<span class="badge badge-warning">${st || 'N/A'}</span>`;
+            }
+        };
+
+        async function doSearch() {
+            const type = document.getElementById('searchType').value;
+            setLoading(true);
+            try {
+                if (type === 'style') await searchStyle(document.getElementById('styleCode').value);
+                else if (type === 'package') await searchPackage(document.getElementById('packageCode').value);
+                else await searchByName(document.getElementById('searchQuery').value);
+            } catch (err) {
+                if(err.message !== "Unauthorized") alert(err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function searchStyle(code) {
+            code = code.trim().toUpperCase();
+            if(!code) throw new Error("Vui lòng nhập Style Code");
+
+            const [pkgRes, infoRes] = await Promise.all([
+                fetchAPI(`/packages?stylecode=${code}&pagesize=1500`),
+                fetchAPI(`/buyerstylecodes?stylecode=${code}`)
+            ]);
+
+            const packages = pkgRes.IsSuccess ? pkgRes.Result : [];
+            const styleInfo = (infoRes.IsSuccess && infoRes.Result.length) ? infoRes.Result[0] : {};
+
+            if(!packages.length && !styleInfo.STYLECODE) throw new Error("Không tìm thấy dữ liệu!");
+
+            const buyer = styleInfo.BUYER || packages[0]?.BUYER || code.substring(0,3);
+            render(code, buyer, styleInfo, packages);
+        }
+
+        async function searchPackage(pkgCode) {
+            pkgCode = pkgCode.trim();
+            if(!pkgCode) throw new Error("Vui lòng nhập Package Code");
+            const parts = pkgCode.split('_');
+            if(parts.length < 4) throw new Error("Mã Package không hợp lệ");
+            const styleCode = parts[3].substring(0, 7).toUpperCase();
+            document.getElementById('searchType').value = 'style';
+            handleInputSwitch();
+            document.getElementById('styleCode').value = styleCode;
+            await searchStyle(styleCode);
+        }
+
+        async function searchByName(query) {
+            if(query.length < 2) throw new Error("Nhập ít nhất 2 ký tự");
+            const res = await fetchAPI(`/buyerstylecodes?pagesize=50&stylename=${encodeURIComponent(query)}`);
+            if(!res.IsSuccess || !res.Result.length) throw new Error("Không tìm thấy kết quả");
+            
+            const html = `<div class="gallery">` + res.Result.map(item => `
+                <div class="img-card" onclick="selectStyle('${item.STYLECODE}')" style="cursor:pointer; padding:20px;">
+                    <h3 style="color:var(--primary)">${item.STYLECODE}</h3>
+                    <p style="margin-top:5px; color:var(--text-sub)">${item.STYLENAME}</p>
+                    <div style="margin-top:10px">${fmt.status(item.STATUS)}</div>
+                </div>
+            `).join('') + `</div>`;
+            document.getElementById('galleryResult').innerHTML = html;
+        }
+
+        function render(styleCode, buyer, info, packages) {
+            document.getElementById('headerInfo').innerText = `${styleCode} | ${buyer} | ${packages.length} Pkgs`;
+
+            // 1. GALLERY
+            const uniqueImagesMap = new Map();
+            if (info.PICTURE && info.PICTURE.trim()) uniqueImagesMap.set(info.PICTURE, { name: info.PICTURE, type: 'Primary' });
+            packages.forEach(p => {
+                if (p.FileName && p.FileName.trim() && !uniqueImagesMap.has(p.FileName)) {
+                    uniqueImagesMap.set(p.FileName, { name: p.FileName, type: 'Package' });
+                }
+            });
+
+            const uniqueImgs = Array.from(uniqueImagesMap.values());
+
+            if (uniqueImgs.length === 0) {
+                document.getElementById('galleryResult').innerHTML = `<div style="text-align:center; padding:40px;">❌ Không có ảnh nào</div>`;
+            } else {
+                document.getElementById('galleryResult').innerHTML = `<div class="gallery">` + uniqueImgs.map(img => {
+                    const proxiedImg = `${CONFIG.WORKER_URL}/PKPDM/style/${buyer}/${styleCode}/Images/${img.name}`;
+                    const thumb = `https://wsrv.nl/?url=${encodeURIComponent(proxiedImg)}&w=400&output=webp&q=80`;
+                    
+                    return `
+                    <div class="img-card">
+                        <div class="img-box" onclick="window.open('${proxiedImg}', '_blank')">
+                            <img src="${thumb}" loading="lazy" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
+                        </div>
+                        <div class="img-info">
+                            <div class="img-name">${img.name}</div>
+                            <span class="badge ${img.type === 'Primary' ? 'badge-success' : 'badge-warning'}">${img.type}</span>
+                        </div>
+                    </div>`;
+                }).join('') + `</div>`;
+            }
+
+            // 2. INFO
+            const stats = {
+                cf: packages.filter(p => p.MXSTATUS === 'CF').length,
+                img: packages.filter(p => p.FileName).length,
+                target: packages.reduce((a,b) => a + (b.MXTARGET || 0), 0)
+            };
+
+            let infoHtml = `
+                <div class="stats-grid">
+                    <div class="stat-box"><div class="stat-val">${stats.cf}</div><div class="stat-label">Confirmed</div></div>
+                    <div class="stat-box"><div class="stat-val">${stats.img}</div><div class="stat-label">Packages có ảnh</div></div>
+                    <div class="stat-box"><div class="stat-val">${fmt.number(stats.target)}</div><div class="stat-label">Tổng Target</div></div>
+                </div>
+                <div class="info-card">
+                    <div class="info-header">CHI TIẾT STYLE</div>
+                    ${Object.entries(info).map(([k,v]) => v ? `
+                        <div class="info-grid">
+                            <div class="info-label">${k}</div>
+                            <div class="info-value">${k.includes('DATE') ? fmt.date(v) : v}</div>
+                        </div>
+                    ` : '').join('')}
+                </div>
+            `;
+            document.getElementById('infoResult').innerHTML = infoHtml;
+
+            // 3. PACKAGES
+            let pkgHtml = `
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Package ID</th>
+                                <th>Line</th>
+                                <th>Color / Size</th>
+                                <th>Target</th>
+                                <th>Plan Start</th>
+                                <th>Plan End</th>
+                                <th>Status</th>
+                                <th style="text-align:center">Image</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${packages.map(p => {
+                                const imgLink = p.FileName ? `${CONFIG.WORKER_URL}/PKPDM/style/${buyer}/${styleCode}/Images/${p.FileName}` : null;
+                                return `
+                                <tr>
+                                    <td style="font-family:monospace; font-weight:600">${p.MXPACKAGE}</td>
+                                    <td>${p.LINENAME || ''}</td>
+                                    <td>${p.STYLECOLORSERIAL} / ${p.STYLESIZE}</td>
+                                    <td>${fmt.number(p.MXTARGET)}</td>
+                                    <td>${fmt.date(p.PLNSTARTDATE || p.PLN_START_DATE)}</td>
+                                    <td>${fmt.date(p.PLNENDDATE || p.PLN_END_DATE)}</td>
+                                    <td>${fmt.status(p.MXSTATUS)}</td>
+                                    <td style="text-align:center">
+                                        ${imgLink ? `<a href="${imgLink}" target="_blank" class="btn-icon" title="${p.FileName}">📷</a>` : ''}
+                                    </td>
+                                </tr>
+                            `}).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            document.getElementById('packagesResult').innerHTML = pkgHtml;
+        }
+
+        // UTILS UI
+        function switchTab(id) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.getElementById('tab-'+id).classList.add('active');
+        }
+
+        function handleInputSwitch() {
+            const val = document.getElementById('searchType').value;
+            ['styleInput','packageInput','searchInput'].forEach(id => document.getElementById(id).style.display = 'none');
+            const map = { 'style': 'styleInput', 'package': 'packageInput', 'search': 'searchInput' };
+            document.getElementById(map[val]).style.display = 'block';
+        }
+
+        function selectStyle(code) {
+            document.getElementById('styleCode').value = code;
+            document.getElementById('searchType').value = 'style';
+            handleInputSwitch();
+            doSearch();
+        }
+
+        function setLoading(b) { document.getElementById('loadingOverlay').style.display = b ? 'grid' : 'none'; }
+    </script>
+</body>
+</html>
