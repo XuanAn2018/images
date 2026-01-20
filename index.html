@@ -92,7 +92,7 @@
         .img-info { padding: 12px; border-top: 1px solid var(--border); }
         .img-name { font-weight: 600; font-size: 0.85rem; margin-bottom: 5px; word-break: break-all; color: var(--text-main); }
         
-        /* Image Status Indicator */
+        /* Image Status Indicator - CẬP NHẬT CHO 3 NGUỒN */
         .img-status {
             position: absolute;
             top: 5px;
@@ -107,7 +107,9 @@
         }
         .img-status.primary { background: #15803d; }
         .img-status.fallback { background: #b45309; }
+        .img-status.secondary { background: #0369a1; }
         .img-status.error { background: #dc2626; }
+        .img-status.loading { background: #64748b; }
 
         /* Stats Cards */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
@@ -146,6 +148,7 @@
         .badge-success { background: #dcfce7; color: #15803d; }
         .badge-warning { background: #fef3c7; color: #b45309; }
         .badge-danger { background: #fee2e2; color: #b91c1c; }
+        .badge-info { background: #dbeafe; color: #1d4ed8; }
         
         .btn-icon { text-decoration: none; font-size: 1.2rem; transition: transform 0.2s; display: inline-block; cursor: pointer; }
         .btn-icon:hover { transform: scale(1.2); }
@@ -167,6 +170,34 @@
             background: #fef3c7;
             color: #b45309;
         }
+        .proxy-status.secondary {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        /* Image Source Legend */
+        .source-legend {
+            display: flex;
+            gap: 15px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        .source-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.75rem;
+            color: var(--text-sub);
+        }
+        .source-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .source-primary { background: #15803d; }
+        .source-fallback { background: #b45309; }
+        .source-secondary { background: #0369a1; }
+        .source-error { background: #dc2626; }
 
         /* Loading */
         .loading { position: fixed; inset: 0; background: rgba(255,255,255,0.8); display: none; place-items: center; z-index: 100; backdrop-filter: blur(2px); }
@@ -186,7 +217,7 @@
     <div class="app-container">
         <!-- SIDEBAR -->
         <div class="sidebar">
-            <div class="brand">🏭 MES Finder Pro v4.1</div>
+            <div class="brand">🏭 MES Finder Pro v5.0</div>
 
             <div class="input-group">
                 <label>Chế độ tìm kiếm</label>
@@ -222,11 +253,30 @@
                 </div>
             </div>
 
-            <!-- Image Cache Stats -->
+            <!-- Image Cache Stats - CẬP NHẬT CHO 3 NGUỒN -->
             <div class="auth-box" style="margin-top: 10px; background: #f0f9ff; font-size: 0.7rem;">
                 <div>
-                    <div>📊 Image Stats</div>
-                    <div>Primary: <span id="primaryImgCount">0</span> | Fallback: <span id="fallbackImgCount">0</span></div>
+                    <div>📊 Image Sources Stats</div>
+                    <div>P1: <span id="primaryImgCount">0</span> | P2: <span id="secondaryImgCount">0</span> | P3: <span id="fallbackImgCount">0</span></div>
+                </div>
+            </div>
+
+            <!-- Legend cho 3 nguồn ảnh -->
+            <div style="margin-top: 15px; padding: 10px; background: #f8fafc; border-radius: 6px; border: 1px solid var(--border);">
+                <div style="font-size: 0.7rem; font-weight: 600; color: var(--text-sub); margin-bottom: 8px;">📡 Nguồn Ảnh</div>
+                <div class="source-legend">
+                    <div class="source-item">
+                        <div class="source-color source-primary"></div>
+                        <span>Primary</span>
+                    </div>
+                    <div class="source-item">
+                        <div class="source-color source-secondary"></div>
+                        <span>Secondary</span>
+                    </div>
+                    <div class="source-item">
+                        <div class="source-color source-fallback"></div>
+                        <span>Fallback</span>
+                    </div>
                 </div>
             </div>
 
@@ -283,20 +333,44 @@
     </div>
 
     <script>
-        // ================= CONFIGURATION =================
+        // ================= CONFIGURATION - CẬP NHẬT 3 NGUỒN =================
         const CONFIG = {
             PROXY_BASE_URL: "https://mes-proxy.vercel.app",
-            // Direct URLs for image fallback (bên cạnh proxy)
-            DIRECT_IMAGE_URLS: [
-                "https://mes-proxy.vercel.app/api/PKPDM", // Primary qua proxy
-                "https://plm.pungkookvn.com:8888/PKPDM"  // Fallback direct
-            ]
+            // 3 NGUỒN ẢNH TÍCH HỢP
+            IMAGE_SOURCES: [
+                {
+                    name: 'proxy-image-server',
+                    base: 'https://mes-proxy.vercel.app/api/PKPDM',
+                    priority: 1,
+                    type: 'primary'
+                },
+                {
+                    name: 'plm-primary', 
+                    base: 'https://plm.pungkookvn.com:8888/PKPDM',
+                    priority: 2,
+                    type: 'secondary'
+                },
+                {
+                    name: 'backup-server',
+                    base: 'http://mespk2.pungkookvn.com/PKPDM',
+                    priority: 3,
+                    type: 'fallback'
+                }
+            ],
+            // Endpoint API mới
+            API_ENDPOINTS: {
+                PARSE_PACKAGE: '/api/parse-package'
+            }
         };
 
         let state = { 
             reqCount: 0,
             currentProxyMode: 'primary',
-            imageStats: { primary: 0, fallback: 0 }
+            imageStats: { 
+                primary: 0,    // Source 1
+                secondary: 0,  // Source 2  
+                fallback: 0    // Source 3
+            }
         };
         let userToken = localStorage.getItem('mes_token') || '';
         let imageCache = new Map(); // Cache để lưu trạng thái ảnh
@@ -309,6 +383,9 @@
             document.getElementById('searchType').addEventListener('change', handleInputSwitch);
             document.getElementById('searchBtn').addEventListener('click', doSearch);
             document.addEventListener('keypress', e => { if(e.key === 'Enter') doSearch() });
+            
+            // Khởi tạo stats
+            updateImageStats();
         });
 
         function checkAuth() {
@@ -344,7 +421,7 @@
             }
         }
 
-        // ================= IMAGE FALLBACK SYSTEM =================
+        // ================= IMAGE FALLBACK SYSTEM - CẬP NHẬT 3 NGUỒN =================
         async function loadImageWithFallback(imgElement, buyer, styleCode, fileName) {
             const cacheKey = `${buyer}/${styleCode}/${fileName}`;
             
@@ -353,37 +430,55 @@
                 const cached = imageCache.get(cacheKey);
                 imgElement.src = cached.url;
                 updateImageStatus(cacheKey, cached.status);
+                updateImageElementStatus(imgElement, cached.status);
                 return;
             }
 
-            // Thử từng URL cho đến khi thành công
-            for (let i = 0; i < CONFIG.DIRECT_IMAGE_URLS.length; i++) {
-                const baseUrl = CONFIG.DIRECT_IMAGE_URLS[i];
-                const imageUrl = `${baseUrl}/style/${buyer}/${styleCode}/Images/${fileName}`;
+            console.log(`🔍 Tìm ảnh từ 3 nguồn: ${buyer}/${styleCode}/${fileName}`);
+
+            // Thử từng nguồn cho đến khi thành công
+            for (let i = 0; i < CONFIG.IMAGE_SOURCES.length; i++) {
+                const source = CONFIG.IMAGE_SOURCES[i];
+                const imageUrl = `${source.base}/style/${buyer}/${styleCode}/Images/${fileName}`;
+                
+                console.log(`  Thử nguồn ${i+1}: ${source.name} (${source.type})`);
                 
                 try {
                     const success = await testImageLoad(imageUrl);
                     if (success) {
-                        const status = i === 0 ? 'primary' : 'fallback';
-                        imageCache.set(cacheKey, { url: imageUrl, status: status });
+                        const status = source.type; // primary, secondary, fallback
                         
                         // Sử dụng wsrv.nl cho thumbnail
                         const thumbUrl = `https://wsrv.nl/?url=${encodeURIComponent(imageUrl)}&w=400&output=webp&q=80`;
                         
+                        // Cache kết quả
+                        imageCache.set(cacheKey, { 
+                            url: thumbUrl, 
+                            fullUrl: imageUrl,
+                            status: status,
+                            source: source.name,
+                            priority: source.priority
+                        });
+                        
                         imgElement.src = thumbUrl;
                         imgElement.dataset.fullUrl = imageUrl;
                         imgElement.dataset.status = status;
+                        imgElement.dataset.source = source.name;
                         
                         updateImageStatus(cacheKey, status);
                         updateImageStats();
+                        updateImageElementStatus(imgElement, status);
+                        
+                        console.log(`  ✅ Thành công với nguồn: ${source.name}`);
                         return;
                     }
                 } catch (e) {
-                    console.log(`URL ${i+1} thất bại:`, e.message);
+                    console.log(`  ❌ Nguồn ${i+1} thất bại:`, e.message);
                 }
             }
             
             // Tất cả đều thất bại
+            console.log(`  ❌ Tất cả 3 nguồn đều thất bại`);
             imageCache.set(cacheKey, { 
                 url: 'https://placehold.co/400x300?text=No+Image', 
                 status: 'error' 
@@ -391,6 +486,25 @@
             imgElement.src = 'https://placehold.co/400x300?text=No+Image';
             imgElement.dataset.status = 'error';
             updateImageStatus(cacheKey, 'error');
+            updateImageElementStatus(imgElement, 'error');
+        }
+
+        // Cập nhật trạng thái cho element ảnh
+        function updateImageElementStatus(imgElement, status) {
+            const statusEl = imgElement.parentElement.querySelector('.img-status');
+            if (statusEl) {
+                statusEl.className = `img-status ${status}`;
+                
+                // Đổi icon theo status
+                let icon = '⏳';
+                if (status === 'primary') icon = '✅';
+                else if (status === 'secondary') icon = '🔷';
+                else if (status === 'fallback') icon = '🔄';
+                else if (status === 'error') icon = '❌';
+                
+                statusEl.textContent = icon;
+                statusEl.title = `Nguồn: ${status}`;
+            }
         }
 
         async function testImageLoad(url) {
@@ -415,6 +529,8 @@
         function updateImageStatus(cacheKey, status) {
             if (status === 'primary') {
                 state.imageStats.primary++;
+            } else if (status === 'secondary') {
+                state.imageStats.secondary++;
             } else if (status === 'fallback') {
                 state.imageStats.fallback++;
             }
@@ -422,6 +538,7 @@
 
         function updateImageStats() {
             document.getElementById('primaryImgCount').innerText = state.imageStats.primary;
+            document.getElementById('secondaryImgCount').innerText = state.imageStats.secondary;
             document.getElementById('fallbackImgCount').innerText = state.imageStats.fallback;
         }
 
@@ -478,6 +595,11 @@
                 proxyStatusEl.innerHTML = `<span style="color:#b45309;">Fallback Server</span>`;
                 proxyStatusEl.parentElement.style.background = '#fef3c7';
                 proxyStatusEl.parentElement.style.borderColor = '#fbbf24';
+            } else if (fallbackType === 'secondary') {
+                state.currentProxyMode = 'secondary';
+                proxyStatusEl.innerHTML = `<span style="color:#0369a1;">Secondary Server</span>`;
+                proxyStatusEl.parentElement.style.background = '#dbeafe';
+                proxyStatusEl.parentElement.style.borderColor = '#93c5fd';
             } else {
                 state.currentProxyMode = 'primary';
                 proxyStatusEl.innerHTML = `<span style="color:#15803d;">Primary Server</span>`;
@@ -486,7 +608,7 @@
             }
         }
 
-        // ================= LOGIC & RENDER =================
+        // ================= LOGIC & RENDER - CẬP NHẬT HIỂN THỊ 3 NGUỒN =================
         const fmt = {
             date: (str) => {
                 if (!str) return '';
@@ -513,7 +635,7 @@
             setLoading(true);
             
             // Reset stats
-            state.imageStats = { primary: 0, fallback: 0 };
+            state.imageStats = { primary: 0, secondary: 0, fallback: 0 };
             imageCache.clear();
             updateImageStats();
             
@@ -576,7 +698,7 @@
         function render(styleCode, buyer, info, packages) {
             document.getElementById('headerInfo').innerText = `${styleCode} | ${buyer} | ${packages.length} Pkgs`;
 
-            // 1. GALLERY với fallback system
+            // 1. GALLERY với fallback system 3 nguồn
             const uniqueImagesMap = new Map();
             if (info.PICTURE && info.PICTURE.trim()) uniqueImagesMap.set(info.PICTURE, { name: info.PICTURE, type: 'Primary' });
             packages.forEach(p => {
@@ -590,7 +712,26 @@
             if (uniqueImgs.length === 0) {
                 document.getElementById('galleryResult').innerHTML = `<div style="text-align:center; padding:40px;">❌ Không có ảnh nào</div>`;
             } else {
-                document.getElementById('galleryResult').innerHTML = `<div class="gallery">` + uniqueImgs.map(img => {
+                document.getElementById('galleryResult').innerHTML = `
+                    <div class="source-legend" style="margin-bottom: 20px; justify-content: center;">
+                        <div class="source-item">
+                            <div class="source-color source-primary"></div>
+                            <span>Primary: ${state.imageStats.primary}</span>
+                        </div>
+                        <div class="source-item">
+                            <div class="source-color source-secondary"></div>
+                            <span>Secondary: ${state.imageStats.secondary}</span>
+                        </div>
+                        <div class="source-item">
+                            <div class="source-color source-fallback"></div>
+                            <span>Fallback: ${state.imageStats.fallback}</span>
+                        </div>
+                        <div class="source-item">
+                            <div class="source-color source-error"></div>
+                            <span>Error: ${state.imageStats.error || 0}</span>
+                        </div>
+                    </div>
+                    <div class="gallery">` + uniqueImgs.map(img => {
                     const cacheKey = `${buyer}/${styleCode}/${img.name}`;
                     const cachedData = imageCache.get(cacheKey);
                     const initialStatus = cachedData ? cachedData.status : 'loading';
@@ -598,7 +739,12 @@
                     return `
                     <div class="img-card">
                         <div class="img-box" onclick="openImage('${buyer}', '${styleCode}', '${img.name}')">
-                            <div class="img-status ${initialStatus}">${initialStatus === 'loading' ? '⏳' : initialStatus === 'primary' ? '✅' : '🔄'}</div>
+                            <div class="img-status ${initialStatus}">
+                                ${initialStatus === 'loading' ? '⏳' : 
+                                  initialStatus === 'primary' ? '✅' : 
+                                  initialStatus === 'secondary' ? '🔷' : 
+                                  initialStatus === 'fallback' ? '🔄' : '❌'}
+                            </div>
                             <img 
                                 data-buyer="${buyer}"
                                 data-style="${styleCode}"
@@ -629,7 +775,7 @@
                 }, 100);
             }
 
-            // 2. INFO
+            // 2. INFO - CẬP NHẬT HIỂN THỊ STATS 3 NGUỒN
             const stats = {
                 cf: packages.filter(p => p.MXSTATUS === 'CF').length,
                 img: packages.filter(p => p.FileName).length,
@@ -641,7 +787,7 @@
                     <div class="stat-box">
                         <div class="stat-val">${stats.cf}</div>
                         <div class="stat-label">Confirmed</div>
-                        ${state.currentProxyMode === 'fallback' ? '<div class="proxy-status fallback">Fallback</div>' : ''}
+                        <div class="proxy-status ${state.currentProxyMode}">${state.currentProxyMode}</div>
                     </div>
                     <div class="stat-box">
                         <div class="stat-val">${stats.img}</div>
@@ -652,10 +798,11 @@
                         <div class="stat-label">Tổng Target</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-val">${state.imageStats.primary + state.imageStats.fallback}</div>
+                        <div class="stat-val">${state.imageStats.primary + state.imageStats.secondary + state.imageStats.fallback}</div>
                         <div class="stat-label">Ảnh loaded</div>
                         <div style="font-size:0.7rem; margin-top:5px">
                             <span style="color:#15803d">✅ ${state.imageStats.primary}</span> | 
+                            <span style="color:#0369a1">🔷 ${state.imageStats.secondary}</span> |
                             <span style="color:#b45309">🔄 ${state.imageStats.fallback}</span>
                         </div>
                     </div>
@@ -685,7 +832,7 @@
                                 <th>Plan Start</th>
                                 <th>Plan End</th>
                                 <th>Status</th>
-                                <th style="text-align:center">Image</th>
+                                <th style="text-align:center">Image Source</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -704,9 +851,24 @@
                                 
                                 const cacheKey = `${buyer}/${styleCode}/${p.FileName}`;
                                 const cached = imageCache.get(cacheKey);
-                                const statusIcon = cached ? 
-                                    (cached.status === 'primary' ? '✅' : 
-                                     cached.status === 'fallback' ? '🔄' : '❌') : '⏳';
+                                let statusIcon = '⏳';
+                                let badgeClass = 'badge-warning';
+                                
+                                if (cached) {
+                                    if (cached.status === 'primary') {
+                                        statusIcon = '✅';
+                                        badgeClass = 'badge-success';
+                                    } else if (cached.status === 'secondary') {
+                                        statusIcon = '🔷';
+                                        badgeClass = 'badge-info';
+                                    } else if (cached.status === 'fallback') {
+                                        statusIcon = '🔄';
+                                        badgeClass = 'badge-warning';
+                                    } else {
+                                        statusIcon = '❌';
+                                        badgeClass = 'badge-danger';
+                                    }
+                                }
                                 
                                 return `
                                 <tr>
@@ -718,11 +880,9 @@
                                     <td>${fmt.date(p.PLNENDDATE || p.PLN_END_DATE)}</td>
                                     <td>${fmt.status(p.MXSTATUS)}</td>
                                     <td style="text-align:center">
-                                        <a href="#" onclick="openImage('${buyer}', '${styleCode}', '${p.FileName}'); return false;" 
-                                           class="btn-icon" 
-                                           title="${p.FileName} (${cached ? cached.status : 'loading'})">
-                                           ${statusIcon}
-                                        </a>
+                                        <span class="badge ${badgeClass}" title="${cached ? cached.source : 'Đang tải...'}">
+                                            ${statusIcon} ${cached ? cached.status.toUpperCase() : 'LOADING'}
+                                        </span>
                                     </td>
                                 </tr>
                             `}).join('')}
@@ -735,12 +895,8 @@
 
         // ================= IMAGE EVENT HANDLERS =================
         function onImageLoad(img) {
-            const statusEl = img.parentElement.querySelector('.img-status');
-            if (statusEl) {
-                const status = img.dataset.status || 'primary';
-                statusEl.className = `img-status ${status}`;
-                statusEl.textContent = status === 'primary' ? '✅' : '🔄';
-            }
+            const status = img.dataset.status || 'primary';
+            updateImageElementStatus(img, status);
         }
 
         function onImageError(img) {
@@ -748,6 +904,7 @@
             const styleCode = img.dataset.style;
             const fileName = img.dataset.filename;
             
+            console.log(`🔄 Retry image: ${fileName}`);
             // Thử load lại với fallback
             loadImageWithFallback(img, buyer, styleCode, fileName);
         }
@@ -756,11 +913,11 @@
             const cacheKey = `${buyer}/${styleCode}/${fileName}`;
             const cached = imageCache.get(cacheKey);
             
-            if (cached && cached.url) {
-                window.open(cached.url, '_blank');
+            if (cached && cached.fullUrl) {
+                window.open(cached.fullUrl, '_blank');
             } else {
                 // Mở URL đầu tiên nếu chưa có cache
-                const url = `${CONFIG.DIRECT_IMAGE_URLS[0]}/style/${buyer}/${styleCode}/Images/${fileName}`;
+                const url = `${CONFIG.IMAGE_SOURCES[0].base}/style/${buyer}/${styleCode}/Images/${fileName}`;
                 window.open(url, '_blank');
             }
         }
