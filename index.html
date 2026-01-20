@@ -92,6 +92,23 @@
         .img-info { padding: 12px; border-top: 1px solid var(--border); }
         .img-name { font-weight: 600; font-size: 0.85rem; margin-bottom: 5px; word-break: break-all; color: var(--text-main); }
         
+        /* Image Status Indicator */
+        .img-status {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            z-index: 2;
+        }
+        .img-status.primary { background: #15803d; }
+        .img-status.fallback { background: #b45309; }
+        .img-status.error { background: #dc2626; }
+
         /* Stats Cards */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .stat-box { background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
@@ -169,7 +186,7 @@
     <div class="app-container">
         <!-- SIDEBAR -->
         <div class="sidebar">
-            <div class="brand">🏭 MES Finder Pro v4</div>
+            <div class="brand">🏭 MES Finder Pro v4.1</div>
 
             <div class="input-group">
                 <label>Chế độ tìm kiếm</label>
@@ -197,11 +214,19 @@
 
             <button id="searchBtn" class="btn btn-primary">🔍 Tìm Kiếm</button>
 
-            <!-- Proxy Info (optional) -->
+            <!-- Proxy Info -->
             <div class="auth-box" style="margin-top: 20px; background: #f8fafc; font-size: 0.7rem;">
                 <div>
                     <div>🔄 Proxy Status</div>
                     <div id="proxyStatus">Primary</div>
+                </div>
+            </div>
+
+            <!-- Image Cache Stats -->
+            <div class="auth-box" style="margin-top: 10px; background: #f0f9ff; font-size: 0.7rem;">
+                <div>
+                    <div>📊 Image Stats</div>
+                    <div>Primary: <span id="primaryImgCount">0</span> | Fallback: <span id="fallbackImgCount">0</span></div>
                 </div>
             </div>
 
@@ -260,15 +285,21 @@
     <script>
         // ================= CONFIGURATION =================
         const CONFIG = {
-            // Link Vercel của bạn - không cần thêm /api vì đã có trong endpoint
-            PROXY_BASE_URL: "https://mes-proxy.vercel.app"
+            PROXY_BASE_URL: "https://mes-proxy.vercel.app",
+            // Direct URLs for image fallback (bên cạnh proxy)
+            DIRECT_IMAGE_URLS: [
+                "https://mes-proxy.vercel.app/api/PKPDM", // Primary qua proxy
+                "https://plm.pungkookvn.com:8888/PKPDM"  // Fallback direct
+            ]
         };
 
         let state = { 
             reqCount: 0,
-            currentProxyMode: 'primary' // 'primary' | 'fallback'
+            currentProxyMode: 'primary',
+            imageStats: { primary: 0, fallback: 0 }
         };
         let userToken = localStorage.getItem('mes_token') || '';
+        let imageCache = new Map(); // Cache để lưu trạng thái ảnh
 
         // ================= INIT & AUTH =================
         document.addEventListener('DOMContentLoaded', () => {
@@ -282,7 +313,6 @@
 
         function checkAuth() {
             if (!userToken) {
-                // Prompt hỏi mật khẩu
                 const pass = prompt("🔒 Hệ thống bảo mật\nVui lòng nhập Mật Khẩu Truy Cập:");
                 if (pass) {
                     userToken = pass;
@@ -314,6 +344,87 @@
             }
         }
 
+        // ================= IMAGE FALLBACK SYSTEM =================
+        async function loadImageWithFallback(imgElement, buyer, styleCode, fileName) {
+            const cacheKey = `${buyer}/${styleCode}/${fileName}`;
+            
+            // Kiểm tra cache trước
+            if (imageCache.has(cacheKey)) {
+                const cached = imageCache.get(cacheKey);
+                imgElement.src = cached.url;
+                updateImageStatus(cacheKey, cached.status);
+                return;
+            }
+
+            // Thử từng URL cho đến khi thành công
+            for (let i = 0; i < CONFIG.DIRECT_IMAGE_URLS.length; i++) {
+                const baseUrl = CONFIG.DIRECT_IMAGE_URLS[i];
+                const imageUrl = `${baseUrl}/style/${buyer}/${styleCode}/Images/${fileName}`;
+                
+                try {
+                    const success = await testImageLoad(imageUrl);
+                    if (success) {
+                        const status = i === 0 ? 'primary' : 'fallback';
+                        imageCache.set(cacheKey, { url: imageUrl, status: status });
+                        
+                        // Sử dụng wsrv.nl cho thumbnail
+                        const thumbUrl = `https://wsrv.nl/?url=${encodeURIComponent(imageUrl)}&w=400&output=webp&q=80`;
+                        
+                        imgElement.src = thumbUrl;
+                        imgElement.dataset.fullUrl = imageUrl;
+                        imgElement.dataset.status = status;
+                        
+                        updateImageStatus(cacheKey, status);
+                        updateImageStats();
+                        return;
+                    }
+                } catch (e) {
+                    console.log(`URL ${i+1} thất bại:`, e.message);
+                }
+            }
+            
+            // Tất cả đều thất bại
+            imageCache.set(cacheKey, { 
+                url: 'https://placehold.co/400x300?text=No+Image', 
+                status: 'error' 
+            });
+            imgElement.src = 'https://placehold.co/400x300?text=No+Image';
+            imgElement.dataset.status = 'error';
+            updateImageStatus(cacheKey, 'error');
+        }
+
+        async function testImageLoad(url) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Kiểm tra thêm xem có phải ảnh lỗi không
+                    if (img.naturalWidth === 0 || img.naturalHeight === 0) {
+                        resolve(false);
+                    } else {
+                        resolve(true);
+                    }
+                };
+                img.onerror = () => resolve(false);
+                img.src = url;
+                
+                // Timeout sau 5 giây
+                setTimeout(() => resolve(false), 5000);
+            });
+        }
+
+        function updateImageStatus(cacheKey, status) {
+            if (status === 'primary') {
+                state.imageStats.primary++;
+            } else if (status === 'fallback') {
+                state.imageStats.fallback++;
+            }
+        }
+
+        function updateImageStats() {
+            document.getElementById('primaryImgCount').innerText = state.imageStats.primary;
+            document.getElementById('fallbackImgCount').innerText = state.imageStats.fallback;
+        }
+
         // ================= API CALL (SECURE) =================
         async function fetchAPI(endpoint) {
             state.reqCount++;
@@ -337,7 +448,7 @@
                     throw new Error("Unauthorized");
                 }
 
-                // Kiểm tra proxy server status từ headers
+                // Kiểm tra proxy server status
                 const proxyServer = res.headers.get('x-proxy-server');
                 const proxyFallback = res.headers.get('x-proxy-fallback');
                 
@@ -400,6 +511,12 @@
         async function doSearch() {
             const type = document.getElementById('searchType').value;
             setLoading(true);
+            
+            // Reset stats
+            state.imageStats = { primary: 0, fallback: 0 };
+            imageCache.clear();
+            updateImageStats();
+            
             try {
                 if (type === 'style') await searchStyle(document.getElementById('styleCode').value);
                 else if (type === 'package') await searchPackage(document.getElementById('packageCode').value);
@@ -459,7 +576,7 @@
         function render(styleCode, buyer, info, packages) {
             document.getElementById('headerInfo').innerText = `${styleCode} | ${buyer} | ${packages.length} Pkgs`;
 
-            // 1. GALLERY - Sử dụng URL chuẩn của proxy
+            // 1. GALLERY với fallback system
             const uniqueImagesMap = new Map();
             if (info.PICTURE && info.PICTURE.trim()) uniqueImagesMap.set(info.PICTURE, { name: info.PICTURE, type: 'Primary' });
             packages.forEach(p => {
@@ -474,14 +591,23 @@
                 document.getElementById('galleryResult').innerHTML = `<div style="text-align:center; padding:40px;">❌ Không có ảnh nào</div>`;
             } else {
                 document.getElementById('galleryResult').innerHTML = `<div class="gallery">` + uniqueImgs.map(img => {
-                    // Sử dụng endpoint chuẩn /api/PKPDM/
-                    const proxiedImg = `${CONFIG.PROXY_BASE_URL}/api/PKPDM/style/${buyer}/${styleCode}/Images/${img.name}`;
-                    const thumb = `https://wsrv.nl/?url=${encodeURIComponent(proxiedImg)}&w=400&output=webp&q=80`;
+                    const cacheKey = `${buyer}/${styleCode}/${img.name}`;
+                    const cachedData = imageCache.get(cacheKey);
+                    const initialStatus = cachedData ? cachedData.status : 'loading';
                     
                     return `
                     <div class="img-card">
-                        <div class="img-box" onclick="window.open('${proxiedImg}', '_blank')">
-                            <img src="${thumb}" loading="lazy" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
+                        <div class="img-box" onclick="openImage('${buyer}', '${styleCode}', '${img.name}')">
+                            <div class="img-status ${initialStatus}">${initialStatus === 'loading' ? '⏳' : initialStatus === 'primary' ? '✅' : '🔄'}</div>
+                            <img 
+                                data-buyer="${buyer}"
+                                data-style="${styleCode}"
+                                data-filename="${img.name}"
+                                loading="lazy"
+                                onload="onImageLoad(this)"
+                                onerror="onImageError(this)"
+                                src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23e2e8f0'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='14' fill='%2364748b' text-anchor='middle'%3ELoading...%3C/text%3E%3C/svg%3E"
+                            >
                         </div>
                         <div class="img-info">
                             <div class="img-name">${img.name}</div>
@@ -489,6 +615,18 @@
                         </div>
                     </div>`;
                 }).join('') + `</div>`;
+
+                // Bắt đầu load ảnh sau khi render
+                setTimeout(() => {
+                    uniqueImgs.forEach(img => {
+                        loadImageWithFallback(
+                            document.querySelector(`img[data-filename="${img.name}"]`),
+                            buyer,
+                            styleCode,
+                            img.name
+                        );
+                    });
+                }, 100);
             }
 
             // 2. INFO
@@ -505,8 +643,22 @@
                         <div class="stat-label">Confirmed</div>
                         ${state.currentProxyMode === 'fallback' ? '<div class="proxy-status fallback">Fallback</div>' : ''}
                     </div>
-                    <div class="stat-box"><div class="stat-val">${stats.img}</div><div class="stat-label">Packages có ảnh</div></div>
-                    <div class="stat-box"><div class="stat-val">${fmt.number(stats.target)}</div><div class="stat-label">Tổng Target</div></div>
+                    <div class="stat-box">
+                        <div class="stat-val">${stats.img}</div>
+                        <div class="stat-label">Packages có ảnh</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-val">${fmt.number(stats.target)}</div>
+                        <div class="stat-label">Tổng Target</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-val">${state.imageStats.primary + state.imageStats.fallback}</div>
+                        <div class="stat-label">Ảnh loaded</div>
+                        <div style="font-size:0.7rem; margin-top:5px">
+                            <span style="color:#15803d">✅ ${state.imageStats.primary}</span> | 
+                            <span style="color:#b45309">🔄 ${state.imageStats.fallback}</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="info-card">
                     <div class="info-header">CHI TIẾT STYLE</div>
@@ -538,9 +690,24 @@
                         </thead>
                         <tbody>
                             ${packages.map(p => {
-                                const imgLink = p.FileName ? 
-                                    `${CONFIG.PROXY_BASE_URL}/api/PKPDM/style/${buyer}/${styleCode}/Images/${p.FileName}` : 
-                                    null;
+                                if (!p.FileName) return `
+                                <tr>
+                                    <td style="font-family:monospace; font-weight:600">${p.MXPACKAGE}</td>
+                                    <td>${p.LINENAME || ''}</td>
+                                    <td>${p.STYLECOLORSERIAL} / ${p.STYLESIZE}</td>
+                                    <td>${fmt.number(p.MXTARGET)}</td>
+                                    <td>${fmt.date(p.PLNSTARTDATE || p.PLN_START_DATE)}</td>
+                                    <td>${fmt.date(p.PLNENDDATE || p.PLN_END_DATE)}</td>
+                                    <td>${fmt.status(p.MXSTATUS)}</td>
+                                    <td style="text-align:center">-</td>
+                                </tr>`;
+                                
+                                const cacheKey = `${buyer}/${styleCode}/${p.FileName}`;
+                                const cached = imageCache.get(cacheKey);
+                                const statusIcon = cached ? 
+                                    (cached.status === 'primary' ? '✅' : 
+                                     cached.status === 'fallback' ? '🔄' : '❌') : '⏳';
+                                
                                 return `
                                 <tr>
                                     <td style="font-family:monospace; font-weight:600">${p.MXPACKAGE}</td>
@@ -551,7 +718,11 @@
                                     <td>${fmt.date(p.PLNENDDATE || p.PLN_END_DATE)}</td>
                                     <td>${fmt.status(p.MXSTATUS)}</td>
                                     <td style="text-align:center">
-                                        ${imgLink ? `<a href="${imgLink}" target="_blank" class="btn-icon" title="${p.FileName}">📷</a>` : ''}
+                                        <a href="#" onclick="openImage('${buyer}', '${styleCode}', '${p.FileName}'); return false;" 
+                                           class="btn-icon" 
+                                           title="${p.FileName} (${cached ? cached.status : 'loading'})">
+                                           ${statusIcon}
+                                        </a>
                                     </td>
                                 </tr>
                             `}).join('')}
@@ -560,6 +731,38 @@
                 </div>
             `;
             document.getElementById('packagesResult').innerHTML = pkgHtml;
+        }
+
+        // ================= IMAGE EVENT HANDLERS =================
+        function onImageLoad(img) {
+            const statusEl = img.parentElement.querySelector('.img-status');
+            if (statusEl) {
+                const status = img.dataset.status || 'primary';
+                statusEl.className = `img-status ${status}`;
+                statusEl.textContent = status === 'primary' ? '✅' : '🔄';
+            }
+        }
+
+        function onImageError(img) {
+            const buyer = img.dataset.buyer;
+            const styleCode = img.dataset.style;
+            const fileName = img.dataset.filename;
+            
+            // Thử load lại với fallback
+            loadImageWithFallback(img, buyer, styleCode, fileName);
+        }
+
+        function openImage(buyer, styleCode, fileName) {
+            const cacheKey = `${buyer}/${styleCode}/${fileName}`;
+            const cached = imageCache.get(cacheKey);
+            
+            if (cached && cached.url) {
+                window.open(cached.url, '_blank');
+            } else {
+                // Mở URL đầu tiên nếu chưa có cache
+                const url = `${CONFIG.DIRECT_IMAGE_URLS[0]}/style/${buyer}/${styleCode}/Images/${fileName}`;
+                window.open(url, '_blank');
+            }
         }
 
         // UTILS UI
@@ -584,7 +787,9 @@
             doSearch();
         }
 
-        function setLoading(b) { document.getElementById('loadingOverlay').style.display = b ? 'grid' : 'none'; }
+        function setLoading(b) { 
+            document.getElementById('loadingOverlay').style.display = b ? 'grid' : 'none'; 
+        }
     </script>
 </body>
 </html>
