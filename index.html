@@ -133,6 +133,24 @@
         .btn-icon { text-decoration: none; font-size: 1.2rem; transition: transform 0.2s; display: inline-block; cursor: pointer; }
         .btn-icon:hover { transform: scale(1.2); }
 
+        /* Proxy Status Badge */
+        .proxy-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 10px;
+            background: #dcfce7;
+            color: #15803d;
+        }
+        .proxy-status.fallback {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
         /* Loading */
         .loading { position: fixed; inset: 0; background: rgba(255,255,255,0.8); display: none; place-items: center; z-index: 100; backdrop-filter: blur(2px); }
         .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -151,7 +169,7 @@
     <div class="app-container">
         <!-- SIDEBAR -->
         <div class="sidebar">
-            <div class="brand">🏭 MES Finder Pro</div>
+            <div class="brand">🏭 MES Finder Pro v4</div>
 
             <div class="input-group">
                 <label>Chế độ tìm kiếm</label>
@@ -178,6 +196,14 @@
             </div>
 
             <button id="searchBtn" class="btn btn-primary">🔍 Tìm Kiếm</button>
+
+            <!-- Proxy Info (optional) -->
+            <div class="auth-box" style="margin-top: 20px; background: #f8fafc; font-size: 0.7rem;">
+                <div>
+                    <div>🔄 Proxy Status</div>
+                    <div id="proxyStatus">Primary</div>
+                </div>
+            </div>
 
             <!-- AUTH STATUS BOX -->
             <div class="auth-box" id="authBox" style="display: none;">
@@ -234,11 +260,14 @@
     <script>
         // ================= CONFIGURATION =================
         const CONFIG = {
-            // Link Vercel của bạn
-            WORKER_URL: "https://mes-proxy.vercel.app/api"
+            // Link Vercel của bạn - không cần thêm /api vì đã có trong endpoint
+            PROXY_BASE_URL: "https://mes-proxy.vercel.app"
         };
 
-        let state = { reqCount: 0 };
+        let state = { 
+            reqCount: 0,
+            currentProxyMode: 'primary' // 'primary' | 'fallback'
+        };
         let userToken = localStorage.getItem('mes_token') || '';
 
         // ================= INIT & AUTH =================
@@ -290,20 +319,33 @@
             state.reqCount++;
             document.getElementById('reqCount').innerText = state.reqCount;
             
-            const url = CONFIG.WORKER_URL + endpoint;
+            const url = CONFIG.PROXY_BASE_URL + '/api' + endpoint;
             
             try {
+                const startTime = Date.now();
                 const res = await fetch(url, {
                     headers: {
-                        'x-access-token': userToken // Gửi token lên server
+                        'x-access-token': userToken
                     }
                 });
 
+                const responseTime = Date.now() - startTime;
+                
                 if (res.status === 401) {
                     alert("⛔ Mật khẩu sai hoặc đã thay đổi! Vui lòng đăng nhập lại.");
                     logout();
                     throw new Error("Unauthorized");
                 }
+
+                // Kiểm tra proxy server status từ headers
+                const proxyServer = res.headers.get('x-proxy-server');
+                const proxyFallback = res.headers.get('x-proxy-fallback');
+                
+                if (proxyServer) {
+                    updateProxyStatus(proxyServer, proxyFallback);
+                }
+
+                console.log(`[API] ${endpoint} - ${res.status} (${responseTime}ms)`);
 
                 if (res.ok) {
                     return await res.json();
@@ -316,10 +358,24 @@
             }
         }
 
-        // ================= LOGIC & RENDER =================
-        // Phần này giữ nguyên logic hiển thị thông minh của v3.1
-        // nhưng đã được cập nhật để sử dụng fetchAPI bảo mật
+        // ================= PROXY STATUS =================
+        function updateProxyStatus(serverInfo, fallbackType) {
+            const proxyStatusEl = document.getElementById('proxyStatus');
+            
+            if (fallbackType === 'fallback') {
+                state.currentProxyMode = 'fallback';
+                proxyStatusEl.innerHTML = `<span style="color:#b45309;">Fallback Server</span>`;
+                proxyStatusEl.parentElement.style.background = '#fef3c7';
+                proxyStatusEl.parentElement.style.borderColor = '#fbbf24';
+            } else {
+                state.currentProxyMode = 'primary';
+                proxyStatusEl.innerHTML = `<span style="color:#15803d;">Primary Server</span>`;
+                proxyStatusEl.parentElement.style.background = '#dcfce7';
+                proxyStatusEl.parentElement.style.borderColor = '#86efac';
+            }
+        }
 
+        // ================= LOGIC & RENDER =================
         const fmt = {
             date: (str) => {
                 if (!str) return '';
@@ -403,7 +459,7 @@
         function render(styleCode, buyer, info, packages) {
             document.getElementById('headerInfo').innerText = `${styleCode} | ${buyer} | ${packages.length} Pkgs`;
 
-            // 1. GALLERY
+            // 1. GALLERY - Sử dụng URL chuẩn của proxy
             const uniqueImagesMap = new Map();
             if (info.PICTURE && info.PICTURE.trim()) uniqueImagesMap.set(info.PICTURE, { name: info.PICTURE, type: 'Primary' });
             packages.forEach(p => {
@@ -418,7 +474,8 @@
                 document.getElementById('galleryResult').innerHTML = `<div style="text-align:center; padding:40px;">❌ Không có ảnh nào</div>`;
             } else {
                 document.getElementById('galleryResult').innerHTML = `<div class="gallery">` + uniqueImgs.map(img => {
-                    const proxiedImg = `${CONFIG.WORKER_URL}/PKPDM/style/${buyer}/${styleCode}/Images/${img.name}`;
+                    // Sử dụng endpoint chuẩn /api/PKPDM/
+                    const proxiedImg = `${CONFIG.PROXY_BASE_URL}/api/PKPDM/style/${buyer}/${styleCode}/Images/${img.name}`;
                     const thumb = `https://wsrv.nl/?url=${encodeURIComponent(proxiedImg)}&w=400&output=webp&q=80`;
                     
                     return `
@@ -443,7 +500,11 @@
 
             let infoHtml = `
                 <div class="stats-grid">
-                    <div class="stat-box"><div class="stat-val">${stats.cf}</div><div class="stat-label">Confirmed</div></div>
+                    <div class="stat-box">
+                        <div class="stat-val">${stats.cf}</div>
+                        <div class="stat-label">Confirmed</div>
+                        ${state.currentProxyMode === 'fallback' ? '<div class="proxy-status fallback">Fallback</div>' : ''}
+                    </div>
                     <div class="stat-box"><div class="stat-val">${stats.img}</div><div class="stat-label">Packages có ảnh</div></div>
                     <div class="stat-box"><div class="stat-val">${fmt.number(stats.target)}</div><div class="stat-label">Tổng Target</div></div>
                 </div>
@@ -477,7 +538,9 @@
                         </thead>
                         <tbody>
                             ${packages.map(p => {
-                                const imgLink = p.FileName ? `${CONFIG.WORKER_URL}/PKPDM/style/${buyer}/${styleCode}/Images/${p.FileName}` : null;
+                                const imgLink = p.FileName ? 
+                                    `${CONFIG.PROXY_BASE_URL}/api/PKPDM/style/${buyer}/${styleCode}/Images/${p.FileName}` : 
+                                    null;
                                 return `
                                 <tr>
                                     <td style="font-family:monospace; font-weight:600">${p.MXPACKAGE}</td>
