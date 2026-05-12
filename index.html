@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MES Finder Pro</title>
+    <title>StyleVision Studio</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@600;700&family=Barlow+Condensed:wght@700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -215,6 +215,44 @@
             #printArea { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#fff; }
             #printArea img { max-width:100%; max-height:100%; object-fit:contain; }
         }
+
+        /* === IMPORT TAB === */
+        .import-zone {
+            border: 2px dashed var(--border); border-radius: 12px; padding: 32px 20px;
+            text-align: center; cursor: pointer; transition: all 0.2s; background: #fafafa;
+            margin-bottom: 20px;
+        }
+        .import-zone:hover, .import-zone.drag-over {
+            border-color: var(--primary); background: #eff6ff;
+        }
+        .import-zone .iz-icon { font-size: 2.5rem; margin-bottom: 10px; }
+        .import-zone .iz-title { font-weight: 700; color: var(--text-main); margin-bottom: 6px; }
+        .import-zone .iz-sub { font-size: 0.8rem; color: var(--text-sub); }
+        .import-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .import-meta input {
+            padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px;
+            font-size: 0.85rem; background: #f1f5f9; color: var(--text-main);
+        }
+        .import-meta input:focus { outline: none; border-color: var(--primary); background: #fff; }
+        .import-meta input::placeholder { color: #94a3b8; }
+        .btn-import-process {
+            width: 100%; padding: 11px; border: none; border-radius: 6px;
+            background: linear-gradient(135deg, #7c3aed, #2563eb); color: #fff;
+            font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-import-process:hover { opacity: 0.9; }
+        .import-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 16px; }
+        .import-card { background: #fff; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .import-card .img-box { height: 180px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: zoom-in; }
+        .import-card .img-box img { width: 100%; height: 100%; object-fit: contain; }
+        .import-card .img-box.transparent-bg {
+            background-image: linear-gradient(45deg,#ccc 25%,transparent 25%),linear-gradient(-45deg,#ccc 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ccc 75%),linear-gradient(-45deg,transparent 75%,#ccc 75%);
+            background-size: 16px 16px; background-position: 0 0,0 8px,8px -8px,-8px 0; background-color: #fff;
+        }
+        .import-card-info { padding: 10px 12px; }
+        .import-card-name { font-size: 0.82rem; font-weight: 600; color: var(--text-sub); margin-bottom: 8px; word-break: break-all; }
+        .import-hint { text-align:center; padding: 40px; color: var(--text-sub); }
         @media (max-width: 768px) {
             .app-container { flex-direction: column; overflow: auto; }
             .sidebar { width: 100%; height: auto; }
@@ -228,7 +266,7 @@
 
 <div class="app-container">
     <div class="sidebar">
-        <div class="brand">🏭 MES Finder Pro</div>
+        <div class="brand">✨ StyleVision Studio</div>
 
         <div class="input-group">
             <label>Chế độ tìm kiếm</label>
@@ -327,6 +365,7 @@
                 <button class="tab active" data-tab="gallery">🖼️ Hình Ảnh</button>
                 <button class="tab" data-tab="info">📋 Thông Tin</button>
                 <button class="tab" data-tab="packages">📦 Packages</button>
+                <button class="tab" data-tab="import">📥 Import Ảnh</button>
             </div>
             <div id="headerInfo" style="font-size:0.85rem;color:var(--text-sub);font-weight:600"></div>
         </div>
@@ -337,6 +376,32 @@
             <div id="tab-info" class="tab-pane">
                 <div id="infoResult" style="text-align:center;padding:60px;color:var(--text-sub)">📋 Thông tin style sẽ hiện ở đây</div>
             </div>
+            <div id="tab-import" class="tab-pane">
+                <div id="importContent">
+                    <!-- Meta fields -->
+                    <div class="import-meta">
+                        <input type="text" id="importBuyer" placeholder="BUYER (vd: ONR)" maxlength="10">
+                        <input type="text" id="importStyleName" placeholder="Style Name (vd: Cargo Pack 60L)">
+                    </div>
+
+                    <!-- Drop zone -->
+                    <div class="import-zone" id="importZone">
+                        <div class="iz-icon">🖼️</div>
+                        <div class="iz-title">Kéo &amp; thả ảnh vào đây</div>
+                        <div class="iz-sub">hoặc click để chọn file • JPG, PNG, WEBP</div>
+                        <input type="file" id="importFileInput" accept="image/*" multiple style="display:none">
+                    </div>
+
+                    <button class="btn-import-process" id="importProcessBtn" style="display:none">
+                        🤖 Xóa nền AI cho tất cả ảnh đã chọn
+                    </button>
+
+                    <div class="import-preview-grid" id="importGrid">
+                        <div class="import-hint">📂 Chưa có ảnh nào — kéo thả hoặc chọn file để bắt đầu</div>
+                    </div>
+                </div>
+            </div>
+
             <div id="tab-packages" class="tab-pane">
                 <div id="packagesResult" style="text-align:center;padding:60px;color:var(--text-sub)">📦 Danh sách packages sẽ hiện ở đây</div>
             </div>
@@ -388,9 +453,13 @@ var _previewData = {};
 var BUYER_LOGOS = {
     "BCA":    "https://i.ibb.co/1YZZty36/BCA.png",
     "BLI":    "https://i.ibb.co/kvG7F6c/BLI.jpg",
+    "GSK":    "https://i.ibb.co/Lz0L60sG/GSK.png",
+    "HAR":    "https://i.ibb.co/KjNy73Dp/HAR.png",
     "KUU":    "https://i.ibb.co/W42DwC6f/KUU.jpg",
     "LLM":    "https://i.ibb.co/YT7HwLsy/LLM.png",
-    "MAMMUT": "https://i.ibb.co/ZpBzGhSD/MUT.png",
+    "LSV":    "https://i.ibb.co/844BdWkv/LSV.png",
+    "MEC":    "https://i.ibb.co/WWSzTGkT/MEC.png",
+    "MUT":    "https://i.ibb.co/ZpBzGhSD/MUT.png",
     "MDK":    "https://i.ibb.co/C3HwjpNy/MDK.png",
     "ONR":    "https://i.ibb.co/ZR97z65C/ONR.png",
     "OSP":    "https://i.ibb.co/LXW3KY0T/OSP.png",
@@ -400,7 +469,9 @@ var BUYER_LOGOS = {
     "REI":    "https://i.ibb.co/LDL9jNQW/REI.jpg",
     "RUX":    "https://i.ibb.co/BHNLGXPz/RUX.png",
     "SPL":    "https://i.ibb.co/VYgHhZhh/SPL.png",
-    "TNF":    "https://i.ibb.co/TDgQRGtM/TNF.png"
+    "SPR":    "https://i.ibb.co/whwfwkw4/SPR.png",
+    "TNF":    "https://i.ibb.co/TDgQRGtM/TNF.png",
+    "YET":    "https://i.ibb.co/4ZCck2X9/YET.png"
 };
 
 // ===================== INIT =====================
@@ -410,6 +481,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
     document.getElementById("searchType").addEventListener("change", handleInputSwitch);
     document.getElementById("searchBtn").addEventListener("click", doSearch);
+    document.getElementById("styleCode").addEventListener("blur", function() {
+        autoMatchLogoFromStyleCode(this.value);
+    });
+    document.getElementById("importBuyer").addEventListener("blur", autoMatchLogoFromImportBuyer);
     document.addEventListener("keypress", function(e) { if(e.key === "Enter") doSearch(); });
     document.getElementById("logoutBtn").addEventListener("click", logout);
 
@@ -475,6 +550,7 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("previewPrintBtn").addEventListener("click", doPrint);
 
     loadBgRemoval();
+    initImportTab();
 });
 
 // ===================== LOGO MANAGEMENT =====================
@@ -517,9 +593,33 @@ function loadSavedLogo() {
 function autoMatchBuyerLogo(buyer) {
     if (!buyer) return;
     var key = buyer.trim().toUpperCase();
-    if (BUYER_LOGOS[key] && !localStorage.getItem("mes_logo_manual")) {
+    // Tìm khớp chính xác trước
+    if (BUYER_LOGOS[key]) {
         applyLogoFromUrl(BUYER_LOGOS[key], key);
+        return;
     }
+    // Fallback: tìm trong BUYER_LOGOS theo key chứa buyer hoặc ngược lại
+    var keys = Object.keys(BUYER_LOGOS);
+    for (var i = 0; i < keys.length; i++) {
+        if (keys[i].indexOf(key) === 0 || key.indexOf(keys[i]) === 0) {
+            applyLogoFromUrl(BUYER_LOGOS[keys[i]], keys[i]);
+            return;
+        }
+    }
+    // Không tìm thấy => bỏ qua, không xóa logo hiện tại
+}
+
+// Auto match từ styleCode (lấy 3 ký tự đầu)
+function autoMatchLogoFromStyleCode(styleCode) {
+    if (!styleCode || styleCode.length < 3) return;
+    var prefix = styleCode.trim().toUpperCase().substring(0, 3);
+    autoMatchBuyerLogo(prefix);
+}
+
+// Auto match từ importBuyer input
+function autoMatchLogoFromImportBuyer() {
+    var buyer = document.getElementById("importBuyer").value.trim();
+    if (buyer) autoMatchBuyerLogo(buyer);
 }
 
 // ===================== BG REMOVAL LIB =====================
@@ -799,6 +899,174 @@ function doPrint() {
         };
         img.src = url;
     }, "image/png");
+}
+
+
+// ===================== IMPORT TAB =====================
+var importFiles = []; // { file, name, objectUrl, card }
+
+function initImportTab() {
+    var zone = document.getElementById("importZone");
+    var fileInput = document.getElementById("importFileInput");
+
+    zone.addEventListener("click", function() { fileInput.click(); });
+    zone.addEventListener("dragover", function(e) { e.preventDefault(); zone.classList.add("drag-over"); });
+    zone.addEventListener("dragleave", function() { zone.classList.remove("drag-over"); });
+    zone.addEventListener("drop", function(e) {
+        e.preventDefault(); zone.classList.remove("drag-over");
+        handleImportFiles(Array.from(e.dataTransfer.files));
+    });
+    fileInput.addEventListener("change", function() {
+        handleImportFiles(Array.from(this.files));
+        this.value = "";
+    });
+    document.getElementById("importProcessBtn").addEventListener("click", processAllImportBgRemoval);
+}
+
+function handleImportFiles(files) {
+    var images = files.filter(function(f) { return f.type.startsWith("image/"); });
+    if (!images.length) return;
+    images.forEach(function(file) {
+        var url = URL.createObjectURL(file);
+        importFiles.push({ file: file, name: file.name, objectUrl: url, done: false });
+    });
+    renderImportGrid();
+    document.getElementById("importProcessBtn").style.display = "flex";
+}
+
+function renderImportGrid() {
+    var grid = document.getElementById("importGrid");
+    grid.innerHTML = "";
+    if (!importFiles.length) {
+        grid.innerHTML = '<div class="import-hint">📂 Chưa có ảnh nào</div>';
+        return;
+    }
+    importFiles.forEach(function(item, idx) {
+        var card = document.createElement("div");
+        card.className = "import-card";
+        card.dataset.idx = idx;
+
+        var imgBox = document.createElement("div");
+        imgBox.className = "img-box";
+        var img = document.createElement("img");
+        img.src = item.objectUrl;
+        img.alt = item.name;
+        imgBox.appendChild(img);
+        imgBox.addEventListener("click", function() { window.open(item.objectUrl, "_blank"); });
+
+        var info = document.createElement("div");
+        info.className = "import-card-info";
+        info.innerHTML = '<div class="import-card-name">' + item.name + '</div>';
+
+        // Nút xóa nền
+        var rmbgBtn = document.createElement("button");
+        rmbgBtn.className = "btn-rmbg";
+        rmbgBtn.innerHTML = "🤖 Xóa nền AI";
+        rmbgBtn.dataset.idx = idx;
+        rmbgBtn.addEventListener("click", function() { processOneImportBgRemoval(idx, card); });
+
+        var progress = document.createElement("div");
+        progress.className = "rmbg-progress";
+        progress.innerHTML = '<div class="rmbg-progress-bar-wrap"><div class="rmbg-progress-bar"></div></div><div class="rmbg-progress-label">Đang xử lý...</div>';
+
+        info.appendChild(rmbgBtn);
+        info.appendChild(progress);
+        card.appendChild(imgBox);
+        card.appendChild(info);
+        grid.appendChild(card);
+        item.card = card;
+        item.imgEl = img;
+    });
+}
+
+async function processOneImportBgRemoval(idx, card) {
+    if (!bgRemoveFn) { alert("⏳ Model AI chưa sẵn sàng, thử lại sau vài giây!"); return; }
+    var item = importFiles[idx];
+    var btn = card.querySelector(".btn-rmbg");
+    var progress = card.querySelector(".rmbg-progress");
+    var bar = card.querySelector(".rmbg-progress-bar");
+    var labelEl = card.querySelector(".rmbg-progress-label");
+    var imgBox = card.querySelector(".img-box");
+    var imgEl = imgBox.querySelector("img");
+
+    btn.disabled = true;
+    progress.style.display = "block";
+    function setP(pct, text) { bar.style.width = pct + "%"; labelEl.textContent = text; }
+
+    try {
+        setP(20, "🤖 AI đang xóa nền...");
+        var config = {
+            model: "small",
+            output: { format: "image/png", type: "foreground" },
+            progress: function(key, current, total) {
+                if (total > 0) setP(Math.min(20 + Math.round((current/total)*60), 80),
+                    "⬇️ " + Math.round(current/1024/1024) + "/" + Math.round(total/1024/1024) + "MB");
+            }
+        };
+        var resultBlob = await bgRemoveFn(item.file, config);
+        var resultUrl = URL.createObjectURL(resultBlob);
+
+        setP(100, "✅ Hoàn thành!");
+        setTimeout(function(){ progress.style.display="none"; }, 1000);
+
+        imgEl.src = resultUrl;
+        imgEl._nobgBlob = resultBlob;
+        imgBox.classList.add("transparent-bg");
+        imgBox.onclick = function() { window.open(resultUrl, "_blank"); };
+        item.resultUrl = resultUrl;
+        item.resultBlob = resultBlob;
+        item.done = true;
+        btn.innerHTML = "✅ Đã xóa nền";
+        btn.style.background = "#059669";
+
+        // Lấy buyer + styleName từ input
+        var buyer = document.getElementById("importBuyer").value.trim().toUpperCase();
+        var styleName = document.getElementById("importStyleName").value.trim();
+        var label = (buyer && styleName) ? buyer + " - " + styleName
+                    : (buyer || styleName || item.name.replace(/\.[^.]+$/, ""));
+        var safeBase = label.replace(/[^a-zA-Z0-9_\-]/g,"_");
+
+        // Tạo fake imgEl với src đã load để dùng renderA4Canvas
+        var fakeImg = new Image();
+        fakeImg.src = resultUrl;
+
+        if (!card.querySelector(".btn-preview")) {
+            var prevBtn = document.createElement("button");
+            prevBtn.className = "btn-preview";
+            prevBtn.innerHTML = "🖨️ Xem trước &amp; In / Tải A4";
+            prevBtn.addEventListener("click", function(){
+                _previewData = { imgEl: fakeImg, styleName: label };
+                setOrientation("landscape");
+                document.getElementById("btnLandscape").classList.add("active");
+                document.getElementById("btnPortrait").classList.remove("active");
+                document.getElementById("previewModal").classList.add("open");
+            });
+            card.querySelector(".import-card-info").appendChild(prevBtn);
+
+            var dlBtn = document.createElement("a");
+            dlBtn.className = "btn-download-rmbg";
+            dlBtn.innerHTML = "⬇️ Tải PNG (trong suốt)";
+            dlBtn.href = resultUrl;
+            dlBtn.download = safeBase + "_nobg.png";
+            card.querySelector(".import-card-info").appendChild(dlBtn);
+        }
+
+    } catch(err) {
+        progress.style.display = "none";
+        btn.disabled = false;
+        btn.innerHTML = "🤖 Xóa nền AI";
+        btn.style.background = "";
+        alert("❌ Lỗi: " + err.message);
+    }
+}
+
+async function processAllImportBgRemoval() {
+    if (!bgRemoveFn) { alert("⏳ Model AI chưa sẵn sàng!"); return; }
+    var pending = importFiles.filter(function(f){ return !f.done; });
+    for (var i = 0; i < pending.length; i++) {
+        var idx = importFiles.indexOf(pending[i]);
+        if (pending[i].card) await processOneImportBgRemoval(idx, pending[i].card);
+    }
 }
 
 // ===================== FORMAT =====================
