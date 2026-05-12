@@ -3,525 +3,989 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MES Finder Pro - Secure Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>MES Finder Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@600;700&family=Barlow+Condensed:wght@700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-dark: #1e40af;
-            --bg-body: #f8fafc;
-            --bg-card: #ffffff;
-            --text-main: #334155;
-            --text-sub: #64748b;
-            --border: #e2e8f0;
+            --primary: #2563eb; --primary-dark: #1e40af;
+            --bg-body: #f8fafc; --bg-card: #ffffff;
+            --text-main: #334155; --text-sub: #64748b; --border: #e2e8f0;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        
         body { background: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
-        /* Layout Structure */
         .app-container { display: flex; flex: 1; height: 100%; overflow: hidden; }
-        
-        /* Sidebar */
         .sidebar {
             width: 300px; background: var(--bg-card); border-right: 1px solid var(--border);
             display: flex; flex-direction: column; padding: 20px; z-index: 10;
-            box-shadow: 4px 0 24px rgba(0,0,0,0.03); flex-shrink: 0;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.03); flex-shrink: 0; overflow-y: auto;
         }
-        
         .brand { font-size: 1.25rem; font-weight: 800; color: var(--primary); margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
-        
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-sub); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-        
         .form-control {
             width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px;
             font-size: 0.95rem; transition: all 0.2s; background: #f1f5f9; color: var(--text-main);
         }
-        .form-control:focus { outline: none; border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-        
+        .form-control:focus { outline: none; border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
         .btn {
             width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;
             display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;
         }
         .btn-primary { background: var(--primary); color: white; margin-top: 10px; }
         .btn-primary:hover { background: var(--primary-dark); }
-
-        /* Auth Box & Status */
         .auth-box {
-            margin-top: auto; padding: 12px; background: #eff6ff; border: 1px solid #bfdbfe; 
+            padding: 12px; background: #eff6ff; border: 1px solid #bfdbfe;
             border-radius: 6px; font-size: 0.8rem; color: #1e40af;
-            display: flex; justify-content: space-between; align-items: center;
+            display: flex; justify-content: space-between; align-items: center; margin-top: 15px;
         }
         .btn-logout { background: none; border: none; color: #dc2626; cursor: pointer; font-weight: 700; font-size: 0.8rem; }
-        .btn-logout:hover { text-decoration: underline; }
-
-        /* Main Area */
-        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        
+        .rmbg-section { margin-top: 18px; padding: 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; }
+        .rmbg-section-title { font-size: 0.8rem; font-weight: 700; color: #15803d; margin-bottom: 8px; }
+        .rmbg-section p { font-size: 0.73rem; color: #166534; line-height: 1.5; margin-bottom: 6px; }
+        .ai-badge { display: inline-flex; align-items: center; gap: 4px; background: #dcfce7; color: #15803d; border-radius: 4px; padding: 2px 8px; font-size: 0.7rem; font-weight: 700; margin-bottom: 8px; }
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .top-bar {
             background: var(--bg-card); padding: 0 25px; height: 60px; border-bottom: 1px solid var(--border);
             display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
         }
-        
         .tabs { display: flex; gap: 25px; height: 100%; }
-        .tab {
-            background: none; border: none; height: 100%; padding: 0 5px; cursor: pointer;
-            font-weight: 500; color: var(--text-sub); border-bottom: 3px solid transparent; transition: all 0.2s;
-        }
+        .tab { background: none; border: none; height: 100%; padding: 0 5px; cursor: pointer; font-weight: 500; color: var(--text-sub); border-bottom: 3px solid transparent; transition: all 0.2s; }
         .tab:hover { color: var(--primary); }
         .tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 700; }
-
         .content-area { flex: 1; padding: 25px; overflow-y: auto; background: var(--bg-body); }
         .tab-pane { display: none; animation: fadeIn 0.3s ease; }
         .tab-pane.active { display: block; }
-
-        /* Gallery Grid */
-        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-        .img-card {
-            background: var(--bg-card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: transform 0.2s;
-        }
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 20px; }
+        .img-card { background: var(--bg-card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: transform 0.2s; }
         .img-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); border-color: var(--primary); }
-        
-        .img-box {
-            height: 200px; background: #e2e8f0; position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer;
-        }
+        .img-box { height: 200px; background: #e2e8f0; position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; }
         .img-box img { width: 100%; height: 100%; object-fit: contain; }
+        .img-box.transparent-bg {
+            background-image: linear-gradient(45deg,#ccc 25%,transparent 25%), linear-gradient(-45deg,#ccc 25%,transparent 25%), linear-gradient(45deg,transparent 75%,#ccc 75%), linear-gradient(-45deg,transparent 75%,#ccc 75%);
+            background-size: 16px 16px; background-position: 0 0,0 8px,8px -8px,-8px 0; background-color: #fff;
+        }
         .img-info { padding: 12px; border-top: 1px solid var(--border); }
         .img-name { font-weight: 600; font-size: 0.85rem; margin-bottom: 5px; word-break: break-all; color: var(--text-main); }
-        
-        /* Stats Cards */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-box { background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .btn-rmbg {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            margin-top: 8px; padding: 8px 12px; width: 100%; border: none; border-radius: 6px;
+            background: linear-gradient(135deg,#059669,#0d9488); color: white;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-rmbg:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+        .btn-rmbg:disabled { background: #94a3b8 !important; cursor: not-allowed; transform: none; }
+        .btn-download-rmbg {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            margin-top: 6px; padding: 7px 12px; width: 100%; border: none; border-radius: 6px;
+            background: #2563eb; color: white; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+            text-decoration: none; transition: background 0.2s;
+        }
+        .btn-download-rmbg:hover { background: #1e40af; }
+        .rmbg-progress { display: none; margin-top: 8px; }
+        .rmbg-progress-bar-wrap { height: 5px; background: #e2e8f0; border-radius: 99px; overflow: hidden; margin-bottom: 4px; }
+        .rmbg-progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg,#059669,#0d9488); border-radius: 99px; transition: width 0.4s ease; }
+        .rmbg-progress-label { font-size: 0.72rem; color: var(--text-sub); text-align: center; }
+        .ai-result-label { font-size: 0.72rem; color: #059669; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 5px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-box { background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); }
         .stat-val { font-size: 1.8rem; font-weight: 700; color: var(--primary); margin-bottom: 5px; }
         .stat-label { font-size: 0.85rem; color: var(--text-sub); font-weight: 500; }
-
-        /* INFO DETAIL (CSS Grid) */
-        .info-card { background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .info-header { padding: 15px 20px; background: #f8fafc; border-bottom: 1px solid var(--border); font-weight: 700; color: var(--text-main); }
-        
-        .info-grid {
-            display: grid;
-            grid-template-columns: 180px 1fr;
-            border-bottom: 1px solid var(--border);
-        }
-        .info-grid:last-child { border-bottom: none; }
-        
-        .info-label {
-            background: #fcfcfc; padding: 12px 20px; font-weight: 600; color: var(--text-sub);
-            border-right: 1px solid var(--border); display: flex; align-items: center; font-size: 0.9rem;
-        }
-        .info-value {
-            padding: 12px 20px; color: var(--text-main); font-family: 'Consolas', monospace;
-            font-size: 0.95rem; word-break: break-all; display: flex; align-items: center;
-        }
-
-        /* Tables */
+        .info-card { background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border); overflow: hidden; }
+        .info-header { padding: 15px 20px; background: #f8fafc; border-bottom: 1px solid var(--border); font-weight: 700; }
+        .info-row { display: grid; grid-template-columns: 180px 1fr; border-bottom: 1px solid var(--border); }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { background: #fcfcfc; padding: 12px 20px; font-weight: 600; color: var(--text-sub); border-right: 1px solid var(--border); font-size: 0.9rem; }
+        .info-value { padding: 12px 20px; font-family: monospace; font-size: 0.95rem; word-break: break-all; }
         .table-wrapper { overflow-x: auto; max-height: 70vh; border: 1px solid var(--border); border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; white-space: nowrap; background: var(--bg-card); }
         th { background: #f1f5f9; padding: 12px 15px; text-align: left; font-weight: 600; color: var(--text-sub); position: sticky; top: 0; z-index: 5; border-bottom: 1px solid var(--border); }
-        td { padding: 10px 15px; border-bottom: 1px solid var(--border); color: var(--text-main); }
+        td { padding: 10px 15px; border-bottom: 1px solid var(--border); }
         tr:hover td { background: #f8fafc; }
-        
         .badge { padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; display: inline-block; }
         .badge-success { background: #dcfce7; color: #15803d; }
         .badge-warning { background: #fef3c7; color: #b45309; }
         .badge-danger { background: #fee2e2; color: #b91c1c; }
-        
-        .btn-icon { text-decoration: none; font-size: 1.2rem; transition: transform 0.2s; display: inline-block; cursor: pointer; }
+        .btn-icon { font-size: 1.2rem; transition: transform 0.2s; display: inline-block; cursor: pointer; text-decoration: none; }
         .btn-icon:hover { transform: scale(1.2); }
-
-        /* Loading */
-        .loading { position: fixed; inset: 0; background: rgba(255,255,255,0.8); display: none; place-items: center; z-index: 100; backdrop-filter: blur(2px); }
+        .loading { position: fixed; inset: 0; background: rgba(255,255,255,0.85); display: none; place-items: center; z-index: 200; backdrop-filter: blur(2px); }
         .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* === PREVIEW MODAL === */
+        .preview-modal { display:none; position:fixed; inset:0; z-index:500; background:rgba(0,0,0,0.75); align-items:center; justify-content:center; }
+        .preview-modal.open { display:flex; }
+        .preview-inner {
+            background:#fff; border-radius:12px; padding:24px; max-width:95vw; max-height:95vh;
+            display:flex; flex-direction:column; gap:16px; box-shadow:0 20px 60px rgba(0,0,0,0.4);
+        }
+        .preview-toolbar {
+            display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+        }
+        .preview-toolbar label { font-size:0.8rem; font-weight:600; color:var(--text-sub); }
+        .toggle-group { display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+        .toggle-btn { padding:6px 14px; border:none; background:#f1f5f9; cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--text-sub); transition:all 0.15s; }
+        .toggle-btn.active { background:var(--primary); color:#fff; }
+        .preview-canvas-wrap {
+            display:flex; align-items:center; justify-content:center;
+            background: repeating-conic-gradient(#e0e0e0 0% 25%, #fff 0% 50%) 0 0 / 16px 16px;
+            border-radius:8px; overflow:hidden; min-height:200px;
+        }
+        .preview-canvas-wrap canvas { max-width:100%; max-height:65vh; display:block; box-shadow:0 4px 16px rgba(0,0,0,0.2); }
+        .preview-actions { display:flex; gap:10px; flex-wrap:wrap; }
+        .btn-preview-dl {
+            flex:1; min-width:140px; padding:10px 16px; border:none; border-radius:6px;
+            background:#2563eb; color:#fff; font-size:0.85rem; font-weight:700; cursor:pointer;
+            display:flex; align-items:center; justify-content:center; gap:6px; transition:background 0.2s;
+        }
+        .btn-preview-dl:hover { background:#1e40af; }
+        .btn-preview-print {
+            flex:1; min-width:140px; padding:10px 16px; border:none; border-radius:6px;
+            background:#059669; color:#fff; font-size:0.85rem; font-weight:700; cursor:pointer;
+            display:flex; align-items:center; justify-content:center; gap:6px; transition:background 0.2s;
+        }
+        .btn-preview-print:hover { background:#047857; }
+        .btn-preview-close {
+            padding:10px 16px; border:none; border-radius:6px;
+            background:#f1f5f9; color:var(--text-main); font-size:0.85rem; font-weight:700; cursor:pointer;
+        }
+        .btn-preview-close:hover { background:#e2e8f0; }
+
+        /* Nút mở preview trên card */
+        .btn-preview {
+            display:flex; align-items:center; justify-content:center; gap:6px;
+            margin-top:6px; padding:7px 12px; width:100%; border:none; border-radius:6px;
+            background:#7c3aed; color:#fff; font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.2s;
+        }
+        .btn-preview:hover { background:#6d28d9; }
+
+        @media print {
+            body * { visibility: hidden !important; }
+            #printArea, #printArea * { visibility: visible !important; }
+            #printArea { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#fff; }
+            #printArea img { max-width:100%; max-height:100%; object-fit:contain; }
+        }
+        
+        /* === LOGO SECTION === */
+        .logo-section { margin-top: 16px; padding: 14px; background: #fafafa; border: 1px solid var(--border); border-radius: 8px; }
+        .logo-section-title { font-size: 0.8rem; font-weight: 700; color: var(--text-main); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .logo-select { width:100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.82rem; background: #f1f5f9; color: var(--text-main); margin-bottom: 8px; }
+        .logo-select:focus { outline: none; border-color: var(--primary); }
+        .logo-or { text-align: center; font-size: 0.72rem; color: var(--text-sub); margin: 5px 0; }
+        .logo-input-row { display: flex; gap: 6px; margin-bottom: 6px; }
+        .logo-input-row input[type=text] { flex: 1; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.78rem; background: #f1f5f9; color: var(--text-main); }
+        .logo-input-row input[type=text]:focus { outline: none; border-color: var(--primary); background:#fff; }
+        .btn-logo-apply { padding: 7px 10px; border: none; border-radius: 6px; background: var(--primary); color: #fff; font-size: 0.78rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .btn-logo-apply:hover { background: var(--primary-dark); }
+        .btn-logo-file { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 7px; border: 1px dashed var(--border); border-radius: 6px; background: #f8fafc; color: var(--text-sub); font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-bottom: 8px; }
+        .btn-logo-file:hover { border-color: var(--primary); color: var(--primary); background: #eff6ff; }
+        .logo-pos-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .logo-pos-row label { font-size: 0.75rem; color: var(--text-sub); font-weight: 600; white-space: nowrap; }
+        .logo-pos-row select { flex: 1; padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.78rem; background: #f1f5f9; }
+        .logo-preview-wrap { display: none; align-items: center; gap: 10px; padding: 8px; background: #fff; border: 1px solid var(--border); border-radius: 6px; }
+        .logo-preview-wrap.show { display: flex; }
+        .logo-preview-wrap img { height: 36px; max-width: 80px; object-fit: contain; border-radius: 4px; background: #f1f5f9; padding: 2px; }
+        .logo-preview-info { flex: 1; font-size: 0.72rem; color: var(--text-sub); line-height: 1.4; word-break: break-all; }
+        .btn-logo-remove { border: none; background: none; color: #dc2626; cursor: pointer; font-size: 0.85rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+        .btn-logo-remove:hover { background: #fee2e2; }
+
+        /* === PREVIEW MODAL === */
+        .preview-modal { display:none; position:fixed; inset:0; z-index:500; background:rgba(0,0,0,0.75); align-items:center; justify-content:center; }
+        .preview-modal.open { display:flex; }
+        .preview-inner { background:#fff; border-radius:12px; padding:24px; max-width:95vw; max-height:95vh; display:flex; flex-direction:column; gap:14px; box-shadow:0 20px 60px rgba(0,0,0,0.4); }
+        .preview-toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+        .preview-toolbar label { font-size:0.8rem; font-weight:600; color:var(--text-sub); }
+        .toggle-group { display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+        .toggle-btn { padding:6px 14px; border:none; background:#f1f5f9; cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--text-sub); transition:all 0.15s; }
+        .toggle-btn.active { background:var(--primary); color:#fff; }
+        .preview-canvas-wrap { display:flex; align-items:center; justify-content:center; background: repeating-conic-gradient(#e0e0e0 0% 25%, #fff 0% 50%) 0 0 / 16px 16px; border-radius:8px; overflow:hidden; min-height:200px; }
+        .preview-canvas-wrap canvas { max-width:100%; max-height:62vh; display:block; box-shadow:0 4px 16px rgba(0,0,0,0.2); }
+        .preview-actions { display:flex; gap:10px; flex-wrap:wrap; }
+        .btn-preview-dl { flex:1; min-width:140px; padding:10px 16px; border:none; border-radius:6px; background:#2563eb; color:#fff; font-size:0.85rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
+        .btn-preview-dl:hover { background:#1e40af; }
+        .btn-preview-print { flex:1; min-width:140px; padding:10px 16px; border:none; border-radius:6px; background:#059669; color:#fff; font-size:0.85rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
+        .btn-preview-print:hover { background:#047857; }
+        .btn-preview-close { padding:10px 16px; border:none; border-radius:6px; background:#f1f5f9; color:var(--text-main); font-size:0.85rem; font-weight:700; cursor:pointer; }
+        .btn-preview-close:hover { background:#e2e8f0; }
+        .btn-preview { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:6px; padding:7px 12px; width:100%; border:none; border-radius:6px; background:#7c3aed; color:#fff; font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
+        .btn-preview:hover { background:#6d28d9; }
+        @media print {
+            body * { visibility: hidden !important; }
+            #printArea, #printArea * { visibility: visible !important; }
+            #printArea { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#fff; }
+            #printArea img { max-width:100%; max-height:100%; object-fit:contain; }
+        }
         @media (max-width: 768px) {
             .app-container { flex-direction: column; overflow: auto; }
             .sidebar { width: 100%; height: auto; }
-            .info-grid { grid-template-columns: 1fr; }
-            .info-label { border-right: none; border-bottom: 1px dashed var(--border); background: #f8fafc; }
+            .info-row { grid-template-columns: 1fr; }
+            .info-label { border-right: none; border-bottom: 1px dashed var(--border); }
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- SIDEBAR -->
-        <div class="sidebar">
-            <div class="brand">🏭 MES Finder Pro</div>
+<div class="loading" id="loadingOverlay"><div class="spinner"></div></div>
 
-            <div class="input-group">
-                <label>Chế độ tìm kiếm</label>
-                <select id="searchType" class="form-control">
-                    <option value="style">Style Code</option>
-                    <option value="package">Package Code</option>
-                    <option value="search">Tìm tên Style</option>
-                </select>
-            </div>
+<div class="app-container">
+    <div class="sidebar">
+        <div class="brand">🏭 MES Finder Pro</div>
 
-            <div id="styleInput" class="input-group">
-                <label>Style Code</label>
-                <input type="text" id="styleCode" class="form-control" placeholder="VD: ONR0112" value="ONR0112">
-            </div>
+        <div class="input-group">
+            <label>Chế độ tìm kiếm</label>
+            <select id="searchType" class="form-control">
+                <option value="style">Style Code</option>
+                <option value="package">Package Code</option>
+                <option value="search">Tìm tên Style</option>
+            </select>
+        </div>
+        <div id="styleInput" class="input-group">
+            <label>Style Code</label>
+            <input type="text" id="styleCode" class="form-control" placeholder="VD: ONR0112" value="ONR0112">
+        </div>
+        <div id="packageInput" class="input-group" style="display:none">
+            <label>Package Code</label>
+            <input type="text" id="packageCode" class="form-control" placeholder="Dán mã Package...">
+        </div>
+        <div id="searchInput" class="input-group" style="display:none">
+            <label>Từ khóa</label>
+            <input type="text" id="searchQuery" class="form-control" placeholder="Nhập tên style...">
+        </div>
+        <button id="searchBtn" class="btn btn-primary">🔍 Tìm Kiếm</button>
 
-            <div id="packageInput" class="input-group" style="display: none;">
-                <label>Package Code</label>
-                <input type="text" id="packageCode" class="form-control" placeholder="Dán mã Package vào đây...">
-            </div>
-
-            <div id="searchInput" class="input-group" style="display: none;">
-                <label>Từ khóa</label>
-                <input type="text" id="searchQuery" class="form-control" placeholder="Nhập tên style...">
-            </div>
-
-            <button id="searchBtn" class="btn btn-primary">🔍 Tìm Kiếm</button>
-
-            <!-- AUTH STATUS BOX -->
-            <div class="auth-box" id="authBox" style="display: none;">
-                <div>
-                    <div>🔐 Secured</div>
-                    <div style="font-size:0.7rem; opacity:0.8">Reqs: <span id="reqCount">0</span></div>
-                </div>
-                <button class="btn-logout" onclick="logout()">Thoát</button>
-            </div>
+        <div class="rmbg-section">
+            <div class="rmbg-section-title">🤖 Xóa nền AI</div>
+            <div class="ai-badge">✅ Miễn phí 100% — Không cần API key</div>
+            <p>Chạy hoàn toàn trên trình duyệt, không upload ảnh ra ngoài.</p>
+            <p>⚠️ Lần đầu tải model ~50MB, sau đó cache lại rất nhanh.</p>
         </div>
 
-        <!-- MAIN CONTENT -->
-        <div class="main">
-            <div id="loadingOverlay" class="loading">
-                <div style="text-align: center;">
-                    <div class="spinner"></div>
-                    <p style="margin-top: 15px; font-weight: 600; color: var(--text-sub);">Đang tải dữ liệu...</p>
-                </div>
+
+        <!-- LOGO SECTION -->
+        <div class="logo-section">
+            <div class="logo-section-title">🏷️ Logo thương hiệu</div>
+            <select id="logoBuyerSelect" class="logo-select">
+                <option value="">— Chọn nhanh từ danh sách —</option>
+                <option value="BCA|https://i.ibb.co/1YZZty36/BCA.png">BCA</option>
+                <option value="BLI|https://i.ibb.co/kvG7F6c/BLI.jpg">BLI</option>
+                <option value="KUU|https://i.ibb.co/W42DwC6f/KUU.jpg">KUU</option>
+                <option value="LLM|https://i.ibb.co/YT7HwLsy/LLM.png">LLM</option>
+                <option value="MAMMUT|https://i.ibb.co/ZpBzGhSD/MAMMUT.png">MAMMUT</option>
+                <option value="MDK|https://i.ibb.co/C3HwjpNy/MDK.png">MDK</option>
+                <option value="ONR|https://i.ibb.co/ZR97z65C/ONR.png">ONR</option>
+                <option value="OSP|https://i.ibb.co/LXW3KY0T/OSP.png">OSP</option>
+                <option value="OVX|https://i.ibb.co/gZ8KwX8S/OVX.jpg">OVX</option>
+                <option value="PK|https://i.ibb.co/G4Y5mnvg/PK.png">PK</option>
+                <option value="RAP|https://i.ibb.co/qYHdcndv/RAP.png">RAP</option>
+                <option value="REI|https://i.ibb.co/LDL9jNQW/REI.jpg">REI</option>
+                <option value="RUX|https://i.ibb.co/BHNLGXPz/RUX.png">RUX</option>
+                <option value="SPL|https://i.ibb.co/VYgHhZhh/SPL.png">SPL</option>
+                <option value="TNF|https://i.ibb.co/TDgQRGtM/TNF.png">TNF</option>
+            </select>
+            <div class="logo-or">— hoặc nhập link / tải file —</div>
+            <div class="logo-input-row">
+                <input type="text" id="logoUrlInput" placeholder="https://i.ibb.co/...">
+                <button class="btn-logo-apply" id="logoApplyBtn">OK</button>
             </div>
-
-            <div class="top-bar">
-                <div class="tabs">
-                    <button class="tab active" onclick="switchTab('images')">🖼️ Gallery Ảnh</button>
-                    <button class="tab" onclick="switchTab('info')">📋 Thông Tin Style</button>
-                    <button class="tab" onclick="switchTab('packages')">📦 Danh Sách Package</button>
-                </div>
-                <div id="headerInfo" style="font-size: 0.9rem; font-weight: 600; color: var(--text-sub);"></div>
+            <label class="btn-logo-file">
+                📁 Chọn file từ máy
+                <input type="file" id="logoFileInput" accept="image/*" style="display:none">
+            </label>
+            <div class="logo-pos-row">
+                <label>Vị trí:</label>
+                <select id="logoPosition">
+                    <option value="top-right">Góc trên phải</option>
+                    <option value="top-left">Góc trên trái</option>
+                    <option value="top-center">Trên giữa</option>
+                    <option value="bottom-right">Góc dưới phải</option>
+                    <option value="bottom-left">Góc dưới trái</option>
+                </select>
             </div>
-
-            <div class="content-area">
-                <!-- TAB: IMAGES -->
-                <div id="tab-images" class="tab-pane active">
-                    <div id="galleryResult">
-                        <div style="text-align: center; margin-top: 80px; color: var(--text-sub);">
-                            <div style="font-size: 3rem; margin-bottom: 10px; opacity: 0.3;">🖼️</div>
-                            <p>Nhập mã Style hoặc Package để xem ảnh</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB: INFO -->
-                <div id="tab-info" class="tab-pane">
-                    <div id="infoResult"></div>
-                </div>
-
-                <!-- TAB: PACKAGES -->
-                <div id="tab-packages" class="tab-pane">
-                    <div id="packagesResult"></div>
-                </div>
+            <div class="logo-preview-wrap" id="logoPreviewWrap">
+                <img id="logoPreviewImg" src="" alt="logo">
+                <div class="logo-preview-info" id="logoPreviewInfo">Logo đã tải</div>
+                <button class="btn-logo-remove" id="logoRemoveBtn">✕</button>
             </div>
+        </div>
+        <div class="auth-box" id="authBox" style="display:none">
+            <div>
+                <div>🔐 Secured</div>
+                <div id="reqCount" style="font-size:0.7rem;opacity:0.7">0 requests</div>
+            </div>
+            <button class="btn-logout" id="logoutBtn">Đăng xuất</button>
         </div>
     </div>
 
-    <script>
-        // ================= CONFIGURATION =================
-        const CONFIG = {
-            // Link Vercel của bạn
-            WORKER_URL: "https://mes-proxy.vercel.app/api"
+    <div class="main">
+        <div class="top-bar">
+            <div class="tabs">
+                <button class="tab active" data-tab="gallery">🖼️ Hình Ảnh</button>
+                <button class="tab" data-tab="info">📋 Thông Tin</button>
+                <button class="tab" data-tab="packages">📦 Packages</button>
+            </div>
+            <div id="headerInfo" style="font-size:0.85rem;color:var(--text-sub);font-weight:600"></div>
+        </div>
+        <div class="content-area">
+            <div id="tab-gallery" class="tab-pane active">
+                <div id="galleryResult" style="text-align:center;padding:60px;color:var(--text-sub)">🔍 Nhập Style Code và tìm kiếm để xem ảnh</div>
+            </div>
+            <div id="tab-info" class="tab-pane">
+                <div id="infoResult" style="text-align:center;padding:60px;color:var(--text-sub)">📋 Thông tin style sẽ hiện ở đây</div>
+            </div>
+            <div id="tab-packages" class="tab-pane">
+                <div id="packagesResult" style="text-align:center;padding:60px;color:var(--text-sub)">📦 Danh sách packages sẽ hiện ở đây</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- PREVIEW MODAL -->
+<div class="preview-modal" id="previewModal">
+    <div class="preview-inner">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div style="font-size:1rem;font-weight:700">🖼️ Xem trước &amp; In ảnh</div>
+            <button class="btn-preview-close" id="previewCloseBtn">✕ Đóng</button>
+        </div>
+        <div class="preview-toolbar">
+            <label>Hướng:</label>
+            <div class="toggle-group">
+                <button class="toggle-btn active" id="btnLandscape">↔ Nằm ngang</button>
+                <button class="toggle-btn" id="btnPortrait">↕ Dọc</button>
+            </div>
+        </div>
+        <div class="preview-canvas-wrap">
+            <canvas id="previewCanvas"></canvas>
+        </div>
+        <div class="preview-actions">
+            <button class="btn-preview-dl" id="previewDlBtn">⬇️ Tải xuống PNG</button>
+            <button class="btn-preview-print" id="previewPrintBtn">🖨️ In ngay</button>
+        </div>
+    </div>
+</div>
+<div id="printArea" style="display:none"></div>
+
+<script>
+// ===================== CONFIG =====================
+var CONFIG = { WORKER_URL: "https://mes-proxy.vercel.app/api" };
+var reqCount = 0;
+var userToken = localStorage.getItem("mes_token") || "";
+var currentStyleName = "";
+var currentBuyer = "";
+var bgRemoveFn = null;
+
+// Logo state
+var _logoDataUrl = null;
+var _logoPosition = "top-right";
+var _previewData = {};
+
+// BUYER_LOGOS map
+var BUYER_LOGOS = {
+    "BCA":    "https://i.ibb.co/1YZZty36/BCA.png",
+    "BLI":    "https://i.ibb.co/kvG7F6c/BLI.jpg",
+    "KUU":    "https://i.ibb.co/W42DwC6f/KUU.jpg",
+    "LLM":    "https://i.ibb.co/YT7HwLsy/LLM.png",
+    "MAMMUT": "https://i.ibb.co/ZpBzGhSD/MUT.png",
+    "MDK":    "https://i.ibb.co/C3HwjpNy/MDK.png",
+    "ONR":    "https://i.ibb.co/ZR97z65C/ONR.png",
+    "OSP":    "https://i.ibb.co/LXW3KY0T/OSP.png",
+    "OVX":    "https://i.ibb.co/gZ8KwX8S/OVX.jpg",
+    "PK":     "https://i.ibb.co/G4Y5mnvg/PK.png",
+    "RAP":    "https://i.ibb.co/qYHdcndv/RAP.png",
+    "REI":    "https://i.ibb.co/LDL9jNQW/REI.jpg",
+    "RUX":    "https://i.ibb.co/BHNLGXPz/RUX.png",
+    "SPL":    "https://i.ibb.co/VYgHhZhh/SPL.png",
+    "TNF":    "https://i.ibb.co/TDgQRGtM/TNF.png"
+};
+
+// ===================== INIT =====================
+document.addEventListener("DOMContentLoaded", function() {
+    checkAuth();
+    loadSavedLogo();
+
+    document.getElementById("searchType").addEventListener("change", handleInputSwitch);
+    document.getElementById("searchBtn").addEventListener("click", doSearch);
+    document.addEventListener("keypress", function(e) { if(e.key === "Enter") doSearch(); });
+    document.getElementById("logoutBtn").addEventListener("click", logout);
+
+    // Tabs
+    document.querySelectorAll(".tab").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            document.querySelectorAll(".tab").forEach(function(t){ t.classList.remove("active"); });
+            document.querySelectorAll(".tab-pane").forEach(function(p){ p.classList.remove("active"); });
+            btn.classList.add("active");
+            document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+        });
+    });
+
+    // Logo: dropdown chọn nhanh
+    document.getElementById("logoBuyerSelect").addEventListener("change", function() {
+        var val = this.value;
+        if (!val) return;
+        var parts = val.split("|");
+        var buyer = parts[0], url = parts[1];
+        applyLogoFromUrl(url, buyer);
+        this.value = "";
+    });
+
+    // Logo: nhập URL
+    document.getElementById("logoApplyBtn").addEventListener("click", function() {
+        var url = document.getElementById("logoUrlInput").value.trim();
+        if (url) applyLogoFromUrl(url, "Custom");
+    });
+
+    // Logo: chọn file
+    document.getElementById("logoFileInput").addEventListener("change", function(e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            _logoDataUrl = ev.target.result;
+            _logoPosition = document.getElementById("logoPosition").value;
+            localStorage.setItem("mes_logo_dataurl", _logoDataUrl);
+            localStorage.setItem("mes_logo_pos", _logoPosition);
+            showLogoPreview(_logoDataUrl, "📁 " + file.name);
         };
+        reader.readAsDataURL(file);
+    });
 
-        let state = { reqCount: 0 };
-        let userToken = localStorage.getItem('mes_token') || '';
+    // Logo: xóa
+    document.getElementById("logoRemoveBtn").addEventListener("click", removeLogo);
 
-        // ================= INIT & AUTH =================
-        document.addEventListener('DOMContentLoaded', () => {
-            checkAuth();
-            
-            // Events
-            document.getElementById('searchType').addEventListener('change', handleInputSwitch);
-            document.getElementById('searchBtn').addEventListener('click', doSearch);
-            document.addEventListener('keypress', e => { if(e.key === 'Enter') doSearch() });
+    // Logo: đổi vị trí
+    document.getElementById("logoPosition").addEventListener("change", function() {
+        _logoPosition = this.value;
+        localStorage.setItem("mes_logo_pos", _logoPosition);
+    });
+
+    // Preview modal
+    document.getElementById("previewCloseBtn").addEventListener("click", function() {
+        document.getElementById("previewModal").classList.remove("open");
+    });
+    document.getElementById("previewModal").addEventListener("click", function(e) {
+        if (e.target === this) this.classList.remove("open");
+    });
+    document.getElementById("btnLandscape").addEventListener("click", function() { setOrientation("landscape"); });
+    document.getElementById("btnPortrait").addEventListener("click", function() { setOrientation("portrait"); });
+    document.getElementById("previewPrintBtn").addEventListener("click", doPrint);
+
+    loadBgRemoval();
+});
+
+// ===================== LOGO MANAGEMENT =====================
+function applyLogoFromUrl(url, label) {
+    _logoDataUrl = url;
+    _logoPosition = document.getElementById("logoPosition").value;
+    localStorage.setItem("mes_logo_dataurl", url);
+    localStorage.setItem("mes_logo_pos", _logoPosition);
+    document.getElementById("logoUrlInput").value = "";
+    showLogoPreview(url, label || "Logo");
+}
+
+function showLogoPreview(src, label) {
+    document.getElementById("logoPreviewImg").src = src;
+    document.getElementById("logoPreviewInfo").textContent = label;
+    document.getElementById("logoPreviewWrap").classList.add("show");
+}
+
+function removeLogo() {
+    _logoDataUrl = null;
+    localStorage.removeItem("mes_logo_dataurl");
+    localStorage.removeItem("mes_logo_pos");
+    document.getElementById("logoPreviewWrap").classList.remove("show");
+    document.getElementById("logoUrlInput").value = "";
+    document.getElementById("logoFileInput").value = "";
+}
+
+function loadSavedLogo() {
+    var saved = localStorage.getItem("mes_logo_dataurl");
+    var savedPos = localStorage.getItem("mes_logo_pos") || "top-right";
+    if (saved) {
+        _logoDataUrl = saved;
+        _logoPosition = savedPos;
+        document.getElementById("logoPosition").value = savedPos;
+        showLogoPreview(saved, "Logo đã lưu");
+    }
+}
+
+// Tự động khớp BUYER khi search xong
+function autoMatchBuyerLogo(buyer) {
+    if (!buyer) return;
+    var key = buyer.trim().toUpperCase();
+    if (BUYER_LOGOS[key] && !localStorage.getItem("mes_logo_manual")) {
+        applyLogoFromUrl(BUYER_LOGOS[key], key);
+    }
+}
+
+// ===================== BG REMOVAL LIB =====================
+function loadBgRemoval() {
+    // Dùng esm.sh - CDN hỗ trợ ESM đáng tin cậy nhất cho browser
+    var ms = document.createElement("script");
+    ms.type = "module";
+    ms.textContent = [
+        'import { removeBackground } from "https://esm.sh/@imgly/background-removal@1.5.5?bundle";',
+        'window._imglyRemoveBg = removeBackground;',
+        'console.log("✅ @imgly loaded via esm.sh");'
+    ].join("\n");
+    document.head.appendChild(ms);
+
+    // Poll lấy function
+    var tries = 0;
+    var poll = setInterval(function() {
+        tries++;
+        if (window._imglyRemoveBg) {
+            bgRemoveFn = window._imglyRemoveBg;
+            console.log("✅ bgRemoveFn ready");
+            clearInterval(poll);
+        }
+        if (tries > 120) {
+            clearInterval(poll);
+            console.warn("⚠️ Không load được @imgly sau 60s, thử fallback...");
+            loadBgRemovalFallback();
+        }
+    }, 500);
+}
+
+function loadBgRemovalFallback() {
+    // Fallback: unpkg
+    var ms = document.createElement("script");
+    ms.type = "module";
+    ms.textContent = [
+        'import { removeBackground } from "https://unpkg.com/@imgly/background-removal@1.5.5/dist/browser/index.mjs";',
+        'window._imglyRemoveBg = removeBackground;',
+        'console.log("✅ @imgly loaded via unpkg");'
+    ].join("\n");
+    document.head.appendChild(ms);
+
+    var tries = 0;
+    var poll = setInterval(function() {
+        tries++;
+        if (window._imglyRemoveBg) { bgRemoveFn = window._imglyRemoveBg; clearInterval(poll); }
+        if (tries > 60) clearInterval(poll);
+    }, 500);
+}
+
+// ===================== REMOVE BACKGROUND =====================
+async function doRemoveBg(btn) {
+    var card = btn.closest(".img-card");
+    var imageUrl = btn.dataset.imgUrl;
+    var styleName = btn.dataset.styleName;
+    var fileName = btn.dataset.fileName;
+
+    if (!bgRemoveFn) { alert("⏳ Model AI chưa sẵn sàng, thử lại sau vài giây!"); return; }
+
+    var progressWrap = card.querySelector(".rmbg-progress");
+    var bar = card.querySelector(".rmbg-progress-bar");
+    var labelEl = card.querySelector(".rmbg-progress-label");
+    var imgBox = card.querySelector(".img-box");
+    var imgEl = imgBox.querySelector("img");
+
+    btn.disabled = true;
+    progressWrap.style.display = "block";
+
+    function setP(pct, text) { bar.style.width = pct + "%"; labelEl.textContent = text; }
+
+    try {
+        setP(10, "📥 Đang tải ảnh...");
+        var imgRes = await fetch(imageUrl, { headers: { "x-access-token": userToken } });
+        if (!imgRes.ok) throw new Error("Không tải được ảnh (lỗi " + imgRes.status + ")");
+        var imgBlob = await imgRes.blob();
+
+        setP(30, "🤖 AI đang xóa nền...");
+        var config = {
+            model: "small",
+            output: { format: "image/png", type: "foreground" },
+            progress: function(key, current, total) {
+                if (total > 0) {
+                    var pct = Math.round((current/total)*50)+30;
+                    setP(Math.min(pct,80), "⬇️ " + Math.round(current/1024/1024) + "/" + Math.round(total/1024/1024) + "MB");
+                }
+            }
+        };
+        var resultBlob = await bgRemoveFn(imgBlob, config);
+
+        setP(95, "✅ Hoàn thành!");
+        setTimeout(function(){ progressWrap.style.display="none"; }, 1000);
+
+        var finalUrl = URL.createObjectURL(resultBlob);
+        imgEl.src = finalUrl;
+        imgEl._nobgBlob = resultBlob;
+        imgBox.classList.add("transparent-bg");
+        imgBox.onclick = function() { window.open(finalUrl, "_blank"); };
+
+        btn.innerHTML = "✅ Đã xóa nền";
+        btn.style.background = "#059669";
+
+        if (!card.querySelector(".btn-preview")) {
+            var safeBase = (currentBuyer && currentStyleName)
+                ? (currentBuyer + "_" + currentStyleName).replace(/[^a-zA-Z0-9_\-]/g,"_")
+                : fileName.replace(/\.[^.]+$/,"");
+
+            var prevBtn = document.createElement("button");
+            prevBtn.className = "btn-preview";
+            prevBtn.innerHTML = "🖨️ Xem trước &amp; In / Tải A4";
+            prevBtn.addEventListener("click", function(){ openPreview(card); });
+            card.querySelector(".img-info").appendChild(prevBtn);
+
+            var dlBtn = document.createElement("a");
+            dlBtn.className = "btn-download-rmbg";
+            dlBtn.innerHTML = "⬇️ Tải PNG (trong suốt)";
+            dlBtn.href = finalUrl;
+            dlBtn.download = safeBase + "_nobg.png";
+            card.querySelector(".img-info").appendChild(dlBtn);
+
+            var lbl = document.createElement("div");
+            lbl.className = "ai-result-label";
+            lbl.textContent = "🤖 @imgly/background-removal";
+            card.querySelector(".img-info").appendChild(lbl);
+        }
+
+    } catch(err) {
+        progressWrap.style.display = "none";
+        btn.disabled = false;
+        btn.innerHTML = "🤖 Xóa nền AI (Miễn phí)";
+        btn.style.background = "";
+        alert("❌ Lỗi: " + err.message);
+        console.error(err);
+    }
+}
+
+// ===================== A4 CANVAS ENGINE =====================
+var A4 = { landscape: { W: 1754, H: 1240 }, portrait: { W: 1240, H: 1754 } };
+var LABEL_COLORS = ["#1a1a2e","#2c3e50","#1b4332","#7b2d8b","#b5451b","#0d3b66","#3d0c02","#1a3a4a"];
+function pickColor(name) {
+    var idx = 0;
+    for (var i=0; i<name.length; i++) idx += name.charCodeAt(i);
+    return LABEL_COLORS[idx % LABEL_COLORS.length];
+}
+
+function wrapTextWords(ctx, text, maxWidth) {
+    var words = text.split(" ");
+    var lines = [], cur = "";
+    for (var i=0; i<words.length; i++) {
+        var test = cur ? cur+" "+words[i] : words[i];
+        if (ctx.measureText(test).width <= maxWidth) { cur = test; }
+        else { if(cur) lines.push(cur); cur = words[i]; }
+    }
+    if(cur) lines.push(cur);
+    return lines;
+}
+
+// Trả về Promise: render canvas A4 xong (kể cả logo async)
+function renderA4Canvas(canvas, imgEl, styleName, orientation) {
+    return new Promise(function(resolve) {
+        var dim = A4[orientation];
+        canvas.width = dim.W; canvas.height = dim.H;
+        var ctx = canvas.getContext("2d");
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, dim.W, dim.H);
+
+        var PAD = Math.round(dim.W * 0.04);
+        var fontFamily = '"Oswald","Barlow Condensed","Inter",Arial,sans-serif';
+        var labelColor = pickColor(styleName);
+
+        // Tính chữ
+        var maxTextW = dim.W - PAD*2;
+        var fontSize = Math.min(80, Math.round(dim.W/18));
+        ctx.font = "700 "+fontSize+"px "+fontFamily;
+        var lines = wrapTextWords(ctx, styleName.toUpperCase(), maxTextW);
+        var lineH = Math.round(fontSize*1.25);
+        var totalTextH = lines.length*lineH + Math.round(fontSize*0.3);
+
+        // Vùng ảnh
+        var imgAreaW = dim.W - PAD*2;
+        var imgAreaH = dim.H - PAD*2 - totalTextH - PAD;
+        var iW = imgEl.naturalWidth || imgEl.width || 800;
+        var iH = imgEl.naturalHeight || imgEl.height || 600;
+        var scale = Math.min(imgAreaW/iW, imgAreaH/iH);
+        var dW = Math.round(iW*scale), dH = Math.round(iH*scale);
+        var dX = Math.round(PAD + (imgAreaW-dW)/2);
+        var dY = Math.round(PAD + (imgAreaH-dH)/2);
+        ctx.drawImage(imgEl, dX, dY, dW, dH);
+
+        // Vẽ chữ
+        ctx.textAlign = "center"; ctx.textBaseline = "top";
+        ctx.font = "700 "+fontSize+"px "+fontFamily;
+        var textStartY = PAD + imgAreaH + PAD;
+        var cx = dim.W/2;
+        lines.forEach(function(line, i) {
+            var y = textStartY + i*lineH;
+            ctx.strokeStyle = "rgba(255,255,255,0.6)";
+            ctx.lineWidth = 4; ctx.lineJoin = "round";
+            ctx.strokeText(line, cx, y);
+            ctx.fillStyle = labelColor;
+            ctx.fillText(line, cx, y);
         });
 
-        function checkAuth() {
-            if (!userToken) {
-                // Prompt hỏi mật khẩu
-                const pass = prompt("🔒 Hệ thống bảo mật\nVui lòng nhập Mật Khẩu Truy Cập:");
-                if (pass) {
-                    userToken = pass;
-                    localStorage.setItem('mes_token', userToken);
-                    showAuthUI();
-                } else {
-                    document.body.innerHTML = `
-                        <div style="height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#f8fafc; color:#334155;">
-                            <h1 style="font-size:3rem; margin-bottom:10px;">⛔</h1>
-                            <h2>Truy cập bị từ chối</h2>
-                            <p>Bạn cần có mật khẩu để sử dụng hệ thống này.</p>
-                            <button onclick="location.reload()" style="margin-top:20px; padding:10px 20px; background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer;">Nhập lại mật khẩu</button>
-                        </div>
-                    `;
-                }
-            } else {
-                showAuthUI();
-            }
-        }
-
-        function showAuthUI() {
-            document.getElementById('authBox').style.display = 'flex';
-        }
-
-        function logout() {
-            if(confirm("Bạn muốn đăng xuất khỏi hệ thống?")) {
-                localStorage.removeItem('mes_token');
-                location.reload();
-            }
-        }
-
-        // ================= API CALL (SECURE) =================
-        async function fetchAPI(endpoint) {
-            state.reqCount++;
-            document.getElementById('reqCount').innerText = state.reqCount;
-            
-            const url = CONFIG.WORKER_URL + endpoint;
-            
-            try {
-                const res = await fetch(url, {
-                    headers: {
-                        'x-access-token': userToken // Gửi token lên server
-                    }
-                });
-
-                if (res.status === 401) {
-                    alert("⛔ Mật khẩu sai hoặc đã thay đổi! Vui lòng đăng nhập lại.");
-                    logout();
-                    throw new Error("Unauthorized");
-                }
-
-                if (res.ok) {
-                    return await res.json();
-                } else {
-                    throw new Error(`Server lỗi: ${res.status}`);
-                }
-            } catch(e) {
-                console.error(e);
-                throw e;
-            }
-        }
-
-        // ================= LOGIC & RENDER =================
-        // Phần này giữ nguyên logic hiển thị thông minh của v3.1
-        // nhưng đã được cập nhật để sử dụng fetchAPI bảo mật
-
-        const fmt = {
-            date: (str) => {
-                if (!str) return '';
-                if (str.includes('-')) {
-                    try {
-                        const d = new Date(str);
-                        return isNaN(d.getTime()) ? str : d.toLocaleString('vi-VN').slice(0, 16).replace(',', '');
-                    } catch(e) { return str; }
-                }
-                if (str.length === 8 && !isNaN(str)) {
-                    return `${str.substring(6,8)}/${str.substring(4,6)}/${str.substring(0,4)}`;
-                }
-                return str;
-            },
-            number: (num) => num ? num.toLocaleString('en-US') : '0',
-            status: (st) => {
-                if(st === 'CF' || st === 'OK') return `<span class="badge badge-success">${st}</span>`;
-                return `<span class="badge badge-warning">${st || 'N/A'}</span>`;
-            }
-        };
-
-        async function doSearch() {
-            const type = document.getElementById('searchType').value;
-            setLoading(true);
-            try {
-                if (type === 'style') await searchStyle(document.getElementById('styleCode').value);
-                else if (type === 'package') await searchPackage(document.getElementById('packageCode').value);
-                else await searchByName(document.getElementById('searchQuery').value);
-            } catch (err) {
-                if(err.message !== "Unauthorized") alert(err.message);
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        async function searchStyle(code) {
-            code = code.trim().toUpperCase();
-            if(!code) throw new Error("Vui lòng nhập Style Code");
-
-            const [pkgRes, infoRes] = await Promise.all([
-                fetchAPI(`/packages?stylecode=${code}&pagesize=1500`),
-                fetchAPI(`/buyerstylecodes?stylecode=${code}`)
-            ]);
-
-            const packages = pkgRes.IsSuccess ? pkgRes.Result : [];
-            const styleInfo = (infoRes.IsSuccess && infoRes.Result.length) ? infoRes.Result[0] : {};
-
-            if(!packages.length && !styleInfo.STYLECODE) throw new Error("Không tìm thấy dữ liệu!");
-
-            const buyer = styleInfo.BUYER || packages[0]?.BUYER || code.substring(0,3);
-            render(code, buyer, styleInfo, packages);
-        }
-
-        async function searchPackage(pkgCode) {
-            pkgCode = pkgCode.trim();
-            if(!pkgCode) throw new Error("Vui lòng nhập Package Code");
-            const parts = pkgCode.split('_');
-            if(parts.length < 4) throw new Error("Mã Package không hợp lệ");
-            const styleCode = parts[3].substring(0, 7).toUpperCase();
-            document.getElementById('searchType').value = 'style';
-            handleInputSwitch();
-            document.getElementById('styleCode').value = styleCode;
-            await searchStyle(styleCode);
-        }
-
-        async function searchByName(query) {
-            if(query.length < 2) throw new Error("Nhập ít nhất 2 ký tự");
-            const res = await fetchAPI(`/buyerstylecodes?pagesize=50&stylename=${encodeURIComponent(query)}`);
-            if(!res.IsSuccess || !res.Result.length) throw new Error("Không tìm thấy kết quả");
-            
-            const html = `<div class="gallery">` + res.Result.map(item => `
-                <div class="img-card" onclick="selectStyle('${item.STYLECODE}')" style="cursor:pointer; padding:20px;">
-                    <h3 style="color:var(--primary)">${item.STYLECODE}</h3>
-                    <p style="margin-top:5px; color:var(--text-sub)">${item.STYLENAME}</p>
-                    <div style="margin-top:10px">${fmt.status(item.STATUS)}</div>
-                </div>
-            `).join('') + `</div>`;
-            document.getElementById('galleryResult').innerHTML = html;
-        }
-
-        function render(styleCode, buyer, info, packages) {
-            document.getElementById('headerInfo').innerText = `${styleCode} | ${buyer} | ${packages.length} Pkgs`;
-
-            // 1. GALLERY
-            const uniqueImagesMap = new Map();
-            if (info.PICTURE && info.PICTURE.trim()) uniqueImagesMap.set(info.PICTURE, { name: info.PICTURE, type: 'Primary' });
-            packages.forEach(p => {
-                if (p.FileName && p.FileName.trim() && !uniqueImagesMap.has(p.FileName)) {
-                    uniqueImagesMap.set(p.FileName, { name: p.FileName, type: 'Package' });
-                }
-            });
-
-            const uniqueImgs = Array.from(uniqueImagesMap.values());
-
-            if (uniqueImgs.length === 0) {
-                document.getElementById('galleryResult').innerHTML = `<div style="text-align:center; padding:40px;">❌ Không có ảnh nào</div>`;
-            } else {
-                document.getElementById('galleryResult').innerHTML = `<div class="gallery">` + uniqueImgs.map(img => {
-                    const proxiedImg = `${CONFIG.WORKER_URL}/PKPDM/style/${buyer}/${styleCode}/Images/${img.name}`;
-                    const thumb = `https://wsrv.nl/?url=${encodeURIComponent(proxiedImg)}&w=400&output=webp&q=80`;
-                    
-                    return `
-                    <div class="img-card">
-                        <div class="img-box" onclick="window.open('${proxiedImg}', '_blank')">
-                            <img src="${thumb}" loading="lazy" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
-                        </div>
-                        <div class="img-info">
-                            <div class="img-name">${img.name}</div>
-                            <span class="badge ${img.type === 'Primary' ? 'badge-success' : 'badge-warning'}">${img.type}</span>
-                        </div>
-                    </div>`;
-                }).join('') + `</div>`;
-            }
-
-            // 2. INFO
-            const stats = {
-                cf: packages.filter(p => p.MXSTATUS === 'CF').length,
-                img: packages.filter(p => p.FileName).length,
-                target: packages.reduce((a,b) => a + (b.MXTARGET || 0), 0)
+        // Vẽ logo
+        if (_logoDataUrl) {
+            var logoImg = new Image();
+            logoImg.crossOrigin = "anonymous";
+            logoImg.onload = function() {
+                var maxLW = Math.round(dim.W*0.15);
+                var maxLH = Math.round(dim.H*0.10);
+                var ls = Math.min(maxLW/logoImg.width, maxLH/logoImg.height);
+                var lW = Math.round(logoImg.width*ls);
+                var lH = Math.round(logoImg.height*ls);
+                var lPad = PAD;
+                var pos = _logoPosition || "top-right";
+                var lX, lY;
+                if      (pos==="top-right")    { lX=dim.W-lPad-lW; lY=lPad; }
+                else if (pos==="top-left")     { lX=lPad;           lY=lPad; }
+                else if (pos==="top-center")   { lX=Math.round((dim.W-lW)/2); lY=lPad; }
+                else if (pos==="bottom-right") { lX=dim.W-lPad-lW; lY=dim.H-lPad-lH; }
+                else if (pos==="bottom-left")  { lX=lPad;           lY=dim.H-lPad-lH; }
+                else                           { lX=dim.W-lPad-lW; lY=lPad; }
+                ctx.drawImage(logoImg, lX, lY, lW, lH);
+                resolve(canvas);
             };
-
-            let infoHtml = `
-                <div class="stats-grid">
-                    <div class="stat-box"><div class="stat-val">${stats.cf}</div><div class="stat-label">Confirmed</div></div>
-                    <div class="stat-box"><div class="stat-val">${stats.img}</div><div class="stat-label">Packages có ảnh</div></div>
-                    <div class="stat-box"><div class="stat-val">${fmt.number(stats.target)}</div><div class="stat-label">Tổng Target</div></div>
-                </div>
-                <div class="info-card">
-                    <div class="info-header">CHI TIẾT STYLE</div>
-                    ${Object.entries(info).map(([k,v]) => v ? `
-                        <div class="info-grid">
-                            <div class="info-label">${k}</div>
-                            <div class="info-value">${k.includes('DATE') ? fmt.date(v) : v}</div>
-                        </div>
-                    ` : '').join('')}
-                </div>
-            `;
-            document.getElementById('infoResult').innerHTML = infoHtml;
-
-            // 3. PACKAGES
-            let pkgHtml = `
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Package ID</th>
-                                <th>Line</th>
-                                <th>Color / Size</th>
-                                <th>Target</th>
-                                <th>Plan Start</th>
-                                <th>Plan End</th>
-                                <th>Status</th>
-                                <th style="text-align:center">Image</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${packages.map(p => {
-                                const imgLink = p.FileName ? `${CONFIG.WORKER_URL}/PKPDM/style/${buyer}/${styleCode}/Images/${p.FileName}` : null;
-                                return `
-                                <tr>
-                                    <td style="font-family:monospace; font-weight:600">${p.MXPACKAGE}</td>
-                                    <td>${p.LINENAME || ''}</td>
-                                    <td>${p.STYLECOLORSERIAL} / ${p.STYLESIZE}</td>
-                                    <td>${fmt.number(p.MXTARGET)}</td>
-                                    <td>${fmt.date(p.PLNSTARTDATE || p.PLN_START_DATE)}</td>
-                                    <td>${fmt.date(p.PLNENDDATE || p.PLN_END_DATE)}</td>
-                                    <td>${fmt.status(p.MXSTATUS)}</td>
-                                    <td style="text-align:center">
-                                        ${imgLink ? `<a href="${imgLink}" target="_blank" class="btn-icon" title="${p.FileName}">📷</a>` : ''}
-                                    </td>
-                                </tr>
-                            `}).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            document.getElementById('packagesResult').innerHTML = pkgHtml;
+            logoImg.onerror = function() { resolve(canvas); };
+            logoImg.src = _logoDataUrl;
+        } else {
+            resolve(canvas);
         }
+    });
+}
 
-        // UTILS UI
-        function switchTab(id) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            document.getElementById('tab-'+id).classList.add('active');
-        }
+function openPreview(card) {
+    var imgEl = card.querySelector(".img-box img");
+    var styleName = card.querySelector(".btn-rmbg")
+        ? card.querySelector(".btn-rmbg").dataset.styleName
+        : "";
+    _previewData = { imgEl: imgEl, styleName: styleName };
+    setOrientation("landscape");
+    document.getElementById("btnLandscape").classList.add("active");
+    document.getElementById("btnPortrait").classList.remove("active");
+    document.getElementById("previewModal").classList.add("open");
+}
 
-        function handleInputSwitch() {
-            const val = document.getElementById('searchType').value;
-            ['styleInput','packageInput','searchInput'].forEach(id => document.getElementById(id).style.display = 'none');
-            const map = { 'style': 'styleInput', 'package': 'packageInput', 'search': 'searchInput' };
-            document.getElementById(map[val]).style.display = 'block';
-        }
+function setOrientation(ori) {
+    _previewData.orientation = ori;
+    document.getElementById("btnLandscape").classList.toggle("active", ori==="landscape");
+    document.getElementById("btnPortrait").classList.toggle("active", ori==="portrait");
 
-        function selectStyle(code) {
-            document.getElementById('styleCode').value = code;
-            document.getElementById('searchType').value = 'style';
-            handleInputSwitch();
-            doSearch();
-        }
+    var canvas = document.getElementById("previewCanvas");
+    var safeFileName = (_previewData.styleName||"image").replace(/[^a-zA-Z0-9_\-]/g,"_")+"_"+ori+".png";
 
-        function setLoading(b) { document.getElementById('loadingOverlay').style.display = b ? 'grid' : 'none'; }
-    </script>
+    renderA4Canvas(canvas, _previewData.imgEl, _previewData.styleName, ori).then(function() {
+        canvas.toBlob(function(blob) {
+            var url = URL.createObjectURL(blob);
+            document.getElementById("previewDlBtn").onclick = function() {
+                var a = document.createElement("a");
+                a.href = url; a.download = safeFileName; a.click();
+            };
+        }, "image/png");
+    });
+}
+
+function doPrint() {
+    var canvas = document.getElementById("previewCanvas");
+    var printArea = document.getElementById("printArea");
+    canvas.toBlob(function(blob) {
+        var url = URL.createObjectURL(blob);
+        var img = new Image();
+        img.onload = function() {
+            printArea.innerHTML = "";
+            printArea.style.display = "flex";
+            img.style.cssText = "max-width:100%;max-height:100%;object-fit:contain";
+            printArea.appendChild(img);
+            setTimeout(function() { window.print(); printArea.style.display="none"; }, 300);
+        };
+        img.src = url;
+    }, "image/png");
+}
+
+// ===================== FORMAT =====================
+var fmt = {
+    date: function(str) {
+        if (!str) return "";
+        try { var d=new Date(str); return isNaN(d.getTime())?str:d.toLocaleString("vi-VN").slice(0,16).replace(",",""); } catch(e){return str;}
+    },
+    number: function(n) { return n?Number(n).toLocaleString("vi-VN"):"0"; },
+    status: function(s) {
+        var map={CF:["badge-success","✅ CF"],CL:["badge-danger","❌ CL"],OP:["badge-warning","🟡 OP"]};
+        var r=map[s]||["badge-warning",s||"?"];
+        return '<span class="badge '+r[0]+'">'+r[1]+'</span>';
+    }
+};
+
+// ===================== SEARCH =====================
+async function doSearch() {
+    setLoading(true);
+    try {
+        var type = document.getElementById("searchType").value;
+        if (type==="style") await searchStyle(document.getElementById("styleCode").value);
+        else if (type==="package") await searchPackage(document.getElementById("packageCode").value);
+        else await searchByName(document.getElementById("searchQuery").value);
+    } catch(err) {
+        if(err.message!=="Unauthorized") alert(err.message);
+    } finally { setLoading(false); }
+}
+
+async function searchStyle(code) {
+    code = code.trim().toUpperCase();
+    if(!code) throw new Error("Vui lòng nhập Style Code");
+    var results = await Promise.all([
+        fetchAPI("/packages?stylecode="+code+"&pagesize=1500"),
+        fetchAPI("/buyerstylecodes?stylecode="+code)
+    ]);
+    var packages = results[0].IsSuccess?results[0].Result:[];
+    var styleInfo = (results[1].IsSuccess&&results[1].Result.length)?results[1].Result[0]:{};
+    if(!packages.length&&!styleInfo.STYLECODE) throw new Error("Không tìm thấy dữ liệu!");
+    var buyer = styleInfo.BUYER||(packages[0]&&packages[0].BUYER)||code.substring(0,3);
+    currentStyleName = styleInfo.STYLENAME||code;
+    currentBuyer = buyer;
+    autoMatchBuyerLogo(buyer);
+    render(code, buyer, styleInfo, packages);
+}
+
+async function searchPackage(pkgCode) {
+    pkgCode = pkgCode.trim();
+    if(!pkgCode) throw new Error("Vui lòng nhập Package Code");
+    var parts = pkgCode.split("_");
+    if(parts.length<4) throw new Error("Mã Package không hợp lệ");
+    var styleCode = parts[3].substring(0,7).toUpperCase();
+    document.getElementById("searchType").value="style";
+    handleInputSwitch();
+    document.getElementById("styleCode").value=styleCode;
+    await searchStyle(styleCode);
+}
+
+async function searchByName(query) {
+    if(query.length<2) throw new Error("Nhập ít nhất 2 ký tự");
+    var res = await fetchAPI("/buyerstylecodes?pagesize=50&stylename="+encodeURIComponent(query));
+    if(!res.IsSuccess||!res.Result.length) throw new Error("Không tìm thấy kết quả");
+    var html='<div class="gallery">'+res.Result.map(function(item){
+        return '<div class="img-card" style="cursor:pointer;padding:20px" data-stylecode="'+item.STYLECODE+'">'+
+            '<h3 style="color:var(--primary)">'+item.STYLECODE+'</h3>'+
+            '<p style="margin-top:5px;color:var(--text-sub)">'+item.STYLENAME+'</p>'+
+            '<div style="margin-top:10px">'+fmt.status(item.STATUS)+'</div></div>';
+    }).join("")+'</div>';
+    document.getElementById("galleryResult").innerHTML=html;
+    document.querySelectorAll("[data-stylecode]").forEach(function(el){
+        el.addEventListener("click",function(){selectStyle(el.dataset.stylecode);});
+    });
+}
+
+function render(styleCode, buyer, info, packages) {
+    document.getElementById("headerInfo").innerText=styleCode+" | "+buyer+" | "+packages.length+" Pkgs";
+    var styleName = (buyer?buyer+" - ":"") + (currentStyleName||styleCode);
+
+    var uniqueMap=new Map();
+    if(info.PICTURE&&info.PICTURE.trim()) uniqueMap.set(info.PICTURE,{name:info.PICTURE,type:"Primary"});
+    packages.forEach(function(p){
+        if(p.FileName&&p.FileName.trim()&&!uniqueMap.has(p.FileName))
+            uniqueMap.set(p.FileName,{name:p.FileName,type:"Package"});
+    });
+    var imgs=Array.from(uniqueMap.values());
+
+    if(!imgs.length){
+        document.getElementById("galleryResult").innerHTML='<div style="text-align:center;padding:40px">❌ Không có ảnh nào</div>';
+    } else {
+        var gallery=document.createElement("div"); gallery.className="gallery";
+        imgs.forEach(function(img){
+            var proxiedImg=CONFIG.WORKER_URL+"/PKPDM/style/"+buyer+"/"+styleCode+"/Images/"+img.name;
+            var thumb="https://wsrv.nl/?url="+encodeURIComponent(proxiedImg)+"&w=400&output=webp&q=80";
+            var safeStyle=styleName;
+            var card=document.createElement("div"); card.className="img-card";
+
+            var imgBox=document.createElement("div"); imgBox.className="img-box";
+            imgBox.addEventListener("click",function(){window.open(proxiedImg,"_blank");});
+            var imgEl=document.createElement("img");
+            imgEl.src=thumb; imgEl.loading="lazy"; imgEl.alt=img.name;
+            imgEl.setAttribute("width","400"); imgEl.setAttribute("height","200");
+            imgEl.onerror=function(){this.src="https://placehold.co/400x300?text=No+Image";};
+            imgBox.appendChild(imgEl);
+
+            var info2=document.createElement("div"); info2.className="img-info";
+            info2.innerHTML='<div class="img-name">'+img.name+'</div>'+
+                '<span class="badge '+( img.type==="Primary"?"badge-success":"badge-warning")+'">'+img.type+'</span>';
+
+            var rmbgBtn=document.createElement("button"); rmbgBtn.className="btn-rmbg";
+            rmbgBtn.innerHTML="🤖 Xóa nền AI (Miễn phí)";
+            rmbgBtn.dataset.imgUrl=proxiedImg;
+            rmbgBtn.dataset.styleName=safeStyle;
+            rmbgBtn.dataset.fileName=img.name;
+            rmbgBtn.addEventListener("click",function(){doRemoveBg(this);});
+
+            var progress=document.createElement("div"); progress.className="rmbg-progress";
+            progress.innerHTML='<div class="rmbg-progress-bar-wrap"><div class="rmbg-progress-bar"></div></div><div class="rmbg-progress-label">Đang xử lý...</div>';
+
+            info2.appendChild(rmbgBtn); info2.appendChild(progress);
+            card.appendChild(imgBox); card.appendChild(info2);
+            gallery.appendChild(card);
+        });
+        document.getElementById("galleryResult").innerHTML="";
+        document.getElementById("galleryResult").appendChild(gallery);
+    }
+
+    // INFO tab
+    var stats={
+        cf:packages.filter(function(p){return p.MXSTATUS==="CF";}).length,
+        img:packages.filter(function(p){return p.FileName;}).length,
+        target:packages.reduce(function(a,b){return a+(b.MXTARGET||0);},0)
+    };
+    document.getElementById("infoResult").innerHTML=
+        '<div class="stats-grid">'+
+        '<div class="stat-box"><div class="stat-val">'+stats.cf+'</div><div class="stat-label">Confirmed</div></div>'+
+        '<div class="stat-box"><div class="stat-val">'+stats.img+'</div><div class="stat-label">Packages có ảnh</div></div>'+
+        '<div class="stat-box"><div class="stat-val">'+fmt.number(stats.target)+'</div><div class="stat-label">Tổng Target</div></div>'+
+        '</div><div class="info-card"><div class="info-header">CHI TIẾT STYLE</div>'+
+        Object.entries(info).map(function(kv){
+            return kv[1]?'<div class="info-row"><div class="info-label">'+kv[0]+'</div><div class="info-value">'+
+                (kv[0].includes("DATE")?fmt.date(kv[1]):kv[1])+'</div></div>':"";
+        }).join("")+'</div>';
+
+    // PACKAGES tab
+    document.getElementById("packagesResult").innerHTML=
+        '<div class="table-wrapper"><table><thead><tr>'+
+        '<th>Package ID</th><th>Line</th><th>Color/Size</th><th>Target</th><th>Plan Start</th><th>Plan End</th><th>Status</th><th>Image</th>'+
+        '</tr></thead><tbody>'+
+        packages.map(function(p){
+            var link=p.FileName?CONFIG.WORKER_URL+"/PKPDM/style/"+buyer+"/"+styleCode+"/Images/"+p.FileName:null;
+            return '<tr><td style="font-family:monospace;font-weight:600">'+p.MXPACKAGE+'</td><td>'+
+                (p.LINENAME||"")+'</td><td>'+p.STYLECOLORSERIAL+" / "+p.STYLESIZE+'</td><td>'+
+                fmt.number(p.MXTARGET)+'</td><td>'+fmt.date(p.PLNSTARTDATE||p.PLN_START_DATE)+'</td><td>'+
+                fmt.date(p.PLNENDDATE||p.PLN_END_DATE)+'</td><td>'+fmt.status(p.MXSTATUS)+'</td><td style="text-align:center">'+
+                (link?'<a href="'+link+'" target="_blank" class="btn-icon">📷</a>':"")+'</td></tr>';
+        }).join("")+'</tbody></table></div>';
+}
+
+// ===================== AUTH & UTILS =====================
+function checkAuth() {
+    if(!userToken){
+        var pass=prompt("🔒 Hệ thống bảo mật\nVui lòng nhập Mật Khẩu Truy Cập:");
+        if(pass){ userToken=pass; localStorage.setItem("mes_token",userToken); document.getElementById("authBox").style.display="flex"; }
+        else { document.body.innerHTML='<div style="height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px"><h2>⛔ Truy cập bị từ chối</h2><button onclick="location.reload()" style="padding:10px 20px;background:#2563eb;color:white;border:none;border-radius:6px;cursor:pointer">Thử lại</button></div>'; }
+    } else { document.getElementById("authBox").style.display="flex"; }
+}
+
+function logout() {
+    if(confirm("Đăng xuất?")){ localStorage.removeItem("mes_token"); location.reload(); }
+}
+
+async function fetchAPI(endpoint) {
+    reqCount++; document.getElementById("reqCount").innerText=reqCount+" requests";
+    var res=await fetch(CONFIG.WORKER_URL+endpoint,{headers:{"x-access-token":userToken}});
+    if(res.status===401){alert("⛔ Mật khẩu sai!");logout();throw new Error("Unauthorized");}
+    if(res.ok) return res.json();
+    throw new Error("Server lỗi: "+res.status);
+}
+
+function handleInputSwitch() {
+    var val=document.getElementById("searchType").value;
+    ["styleInput","packageInput","searchInput"].forEach(function(id){document.getElementById(id).style.display="none";});
+    var map={style:"styleInput",package:"packageInput",search:"searchInput"};
+    document.getElementById(map[val]).style.display="block";
+}
+
+function selectStyle(code) {
+    document.getElementById("styleCode").value=code;
+    document.getElementById("searchType").value="style";
+    handleInputSwitch(); doSearch();
+}
+
+function setLoading(b){ document.getElementById("loadingOverlay").style.display=b?"grid":"none"; }
+</script>
 </body>
 </html>
