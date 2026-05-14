@@ -729,7 +729,7 @@ async function doRemoveBg(btn) {
             var prevBtn = document.createElement("button");
             prevBtn.className = "btn-preview";
             prevBtn.innerHTML = "🖨️ Xem trước &amp; In / Tải A4";
-            prevBtn.addEventListener("click", function(){ openPreview(card); });
+            prevBtn.addEventListener("click", function(){ openPreview(card, fileBaseName); });
             card.querySelector(".img-info").appendChild(prevBtn);
 
             var dlBtn = document.createElement("a");
@@ -853,12 +853,12 @@ function renderA4Canvas(canvas, imgEl, styleName, orientation) {
     });
 }
 
-function openPreview(card) {
+function openPreview(card, fileBaseName) {
     var imgEl = card.querySelector(".img-box img");
     var styleName = card.querySelector(".btn-rmbg")
         ? card.querySelector(".btn-rmbg").dataset.styleName
         : "";
-    _previewData = { imgEl: imgEl, styleName: styleName };
+    _previewData = { imgEl: imgEl, styleName: styleName, fileBaseName: fileBaseName || styleName };
     setOrientation("landscape");
     document.getElementById("btnLandscape").classList.add("active");
     document.getElementById("btnPortrait").classList.remove("active");
@@ -871,7 +871,7 @@ function setOrientation(ori) {
     document.getElementById("btnPortrait").classList.toggle("active", ori==="portrait");
 
     var canvas = document.getElementById("previewCanvas");
-    var safeFileName = (_previewData.styleName||"image").replace(/[^a-zA-Z0-9_\-]/g,"_")+"_"+ori+".png";
+    var safeFileName = (_previewData.fileBaseName||_previewData.styleName||"image").replace(/[^a-zA-Z0-9_\-]/g,"_")+"_"+ori+".png";
 
     renderA4Canvas(canvas, _previewData.imgEl, _previewData.styleName, ori).then(function() {
         canvas.toBlob(function(blob) {
@@ -1143,8 +1143,9 @@ async function searchByName(query) {
 
 function render(styleCode, buyer, info, packages) {
     document.getElementById("headerInfo").innerText=styleCode+" | "+buyer+" | "+packages.length+" Pkgs";
-    var styleName = styleCode + " - " + (currentStyleName||styleCode);
-
+    var styleName = (buyer?buyer+" - ":"") + (currentStyleName||styleCode);
+    var fileBaseName = styleCode + "_" + (currentStyleName||styleCode);
+    
     var uniqueMap=new Map();
     if(info.PICTURE&&info.PICTURE.trim()) uniqueMap.set(info.PICTURE,{name:info.PICTURE,type:"Primary"});
     packages.forEach(function(p){
