@@ -1143,7 +1143,7 @@ async function searchByName(query) {
 
 function render(styleCode, buyer, info, packages) {
     document.getElementById("headerInfo").innerText=styleCode+" | "+buyer+" | "+packages.length+" Pkgs";
-    var styleName = (buyer?buyer+" - ":"") + (currentStyleName||styleCode);
+    var styleName = styleCode + " - " + (currentStyleName||styleCode);
 
     var uniqueMap=new Map();
     if(info.PICTURE&&info.PICTURE.trim()) uniqueMap.set(info.PICTURE,{name:info.PICTURE,type:"Primary"});
