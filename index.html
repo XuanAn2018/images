@@ -722,9 +722,11 @@ async function doRemoveBg(btn) {
         btn.style.background = "#059669";
 
         if (!card.querySelector(".btn-preview")) {
-            var safeBase = (currentBuyer && currentStyleName)
-                ? (currentBuyer + "_" + currentStyleName).replace(/[^a-zA-Z0-9_\-]/g,"_")
+            var currentStyleCode = document.getElementById("styleCode").value.trim().toUpperCase();
+            var safeBase = (currentStyleCode && currentStyleName)
+                ? (currentStyleCode + "_" + currentStyleName).replace(/[^a-zA-Z0-9_\-]/g,"_")
                 : fileName.replace(/\.[^.]+$/,"");
+            var fileBaseName = currentStyleCode + "_" + (currentStyleName || currentStyleCode);
 
             var prevBtn = document.createElement("button");
             prevBtn.className = "btn-preview";
