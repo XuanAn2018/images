@@ -15,7 +15,7 @@
         body { background: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .app-container { display: flex; flex: 1; height: 100%; overflow: hidden; }
         .sidebar {
-            width: 300px; background: var(--bg-card); border-right: 1px solid var(--border);
+            width: 330px; background: var(--bg-card); border-right: 1px solid var(--border);
             display: flex; flex-direction: column; padding: 20px; z-index: 10;
             box-shadow: 4px 0 24px rgba(0,0,0,0.03); flex-shrink: 0; overflow-y: auto;
         }
@@ -33,6 +33,36 @@
         }
         .btn-primary { background: var(--primary); color: white; margin-top: 10px; }
         .btn-primary:hover { background: var(--primary-dark); }
+        .recent-section {
+            margin-top: 14px; padding: 12px; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 8px;
+        }
+        .recent-header {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            margin-bottom: 8px;
+        }
+        .recent-title { font-size: 0.8rem; font-weight: 700; color: var(--text-main); }
+        .btn-clear-recent {
+            border: none; background: #f1f5f9; color: var(--text-sub); cursor: pointer;
+            font-size: 0.7rem; font-weight: 700; padding: 4px 8px; border-radius: 5px;
+        }
+        .btn-clear-recent:hover { background: #e2e8f0; color: #475569; }
+        .recent-list { display: flex; flex-direction: column; gap: 6px; }
+        .recent-empty { font-size: 0.75rem; color: var(--text-sub); line-height: 1.4; padding: 4px 0; }
+        .recent-item {
+            width: 100%; border: 1px solid var(--border); border-radius: 6px; background: #f8fafc;
+            padding: 8px 9px; text-align: left; cursor: pointer; transition: all 0.15s;
+        }
+        .recent-item:hover { border-color: var(--primary); background: #eff6ff; }
+        .recent-main {
+            display: flex; justify-content: space-between; gap: 8px; align-items: flex-start;
+            font-size: 0.78rem; font-weight: 700; color: var(--text-main);
+        }
+        .recent-code { color: var(--primary); white-space: nowrap; }
+        .recent-name {
+            flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .recent-meta { margin-top: 4px; font-size: 0.7rem; color: var(--text-sub); }
         .auth-box {
             padding: 12px; background: #eff6ff; border: 1px solid #bfdbfe;
             border-radius: 6px; font-size: 0.8rem; color: #1e40af;
@@ -43,6 +73,10 @@
         .rmbg-section-title { font-size: 0.8rem; font-weight: 700; color: #15803d; margin-bottom: 8px; }
         .rmbg-section p { font-size: 0.73rem; color: #166534; line-height: 1.5; margin-bottom: 6px; }
         .ai-badge { display: inline-flex; align-items: center; gap: 4px; background: #dcfce7; color: #15803d; border-radius: 4px; padding: 2px 8px; font-size: 0.7rem; font-weight: 700; margin-bottom: 8px; }
+        .rmbg-methods { display: flex; gap: 10px; margin-bottom: 10px; }
+        .rmbg-method-label { flex: 1; display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; padding: 6px 8px; background: #fff; border: 1px solid var(--border); border-radius: 6px; transition: all 0.2s; color: var(--text-main); }
+        .rmbg-method-label:hover { border-color: var(--primary); }
+        .rmbg-method-label input[type="radio"] { cursor: pointer; margin: 0; }
         .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .top-bar {
             background: var(--bg-card); padding: 0 25px; height: 60px; border-bottom: 1px solid var(--border);
@@ -290,11 +324,39 @@
         </div>
         <button id="searchBtn" class="btn btn-primary">🔍 Tìm Kiếm</button>
 
+        <div class="recent-section" id="recentSection">
+            <div class="recent-header">
+                <div class="recent-title">📜 Đơn hàng gần đây</div>
+                <button type="button" class="btn-clear-recent" id="clearRecentBtn">Xóa lịch sử</button>
+            </div>
+            <div class="recent-list" id="recentList">
+                <div class="recent-empty">Chưa có style nào được xem.</div>
+            </div>
+        </div>
+
         <div class="rmbg-section">
             <div class="rmbg-section-title">🤖 Xóa nền AI</div>
-            <div class="ai-badge">✅ Miễn phí 100% — Không cần API key</div>
-            <p>Chạy hoàn toàn trên trình duyệt, không upload ảnh ra ngoài.</p>
-            <p>⚠️ Lần đầu tải model ~50MB, sau đó cache lại rất nhanh.</p>
+            <div class="rmbg-methods">
+                <label class="rmbg-method-label">
+                    <input type="radio" name="rmbgMethod" value="imgly" checked onchange="changeRmbgMethod(this.value)">
+                    <span>@imgly (Local)</span>
+                </label>
+                <label class="rmbg-method-label">
+                    <input type="radio" name="rmbgMethod" value="removebg" onchange="changeRmbgMethod(this.value)">
+                    <span>remove.bg API</span>
+                </label>
+            </div>
+            
+            <div id="imglyDesc">
+                <div class="ai-badge">✅ Miễn phí 100% — Không cần API key</div>
+                <p>Chạy hoàn toàn trên trình duyệt, không upload ảnh ra ngoài.</p>
+                <p>⚠️ Lần đầu tải model ~50MB, sau đó cache lại rất nhanh.</p>
+            </div>
+
+            <div id="removebgDesc" style="display:none; margin-top:8px;">
+                <div class="ai-badge" style="background:#dbeafe; color:#1e40af;">🌐 remove.bg Proxy</div>
+                <p>Hệ thống tự động dùng multi-key bảo mật. Bạn không cần nhập API key.</p>
+            </div>
         </div>
 
 
@@ -303,27 +365,27 @@
             <div class="logo-section-title">🏷️ Logo thương hiệu</div>
             <select id="logoBuyerSelect" class="logo-select">
                 <option value="">— Chọn nhanh từ danh sách —</option>
-                <option value="BCA|https://i.ibb.co/1YZZty36/BCA.png">BCA</option>
-                <option value="BLI|https://i.ibb.co/kvG7F6c/BLI.jpg">BLI</option>
-                <option value="GSK|https://i.ibb.co/Lz0L60sG/GSK.png">GSK</option>
-                <option value="HAR|https://i.ibb.co/KjNy73Dp/HAR.png">HAR</option>
-                <option value="KUU|https://i.ibb.co/W42DwC6f/KUU.jpg">KUU</option>
-                <option value="LLM|https://i.ibb.co/YT7HwLsy/LLM.png">LLM</option>
-                <option value="LSV|https://i.ibb.co/844BdWkv/LSV.png">LSV</option>
-                <option value="MEC|https://i.ibb.co/WWSzTGkT/MEC.png">MEC</option>
-                <option value="MUT|https://i.ibb.co/ZpBzGhSD/MUT.png">MUT</option>
-                <option value="MDK|https://i.ibb.co/C3HwjpNy/MDK.png">MDK</option>
-                <option value="ONR|https://i.ibb.co/ZR97z65C/ONR.png">ONR</option>
-                <option value="OSP|https://i.ibb.co/LXW3KY0T/OSP.png">OSP</option>
-                <option value="OVX|https://i.ibb.co/gZ8KwX8S/OVX.jpg">OVX</option>
-                <option value="PK|https://i.ibb.co/G4Y5mnvg/PK.png">PK</option>
-                <option value="RAP|https://i.ibb.co/qYHdcndv/RAP.png">RAP</option>
-                <option value="REI|https://i.ibb.co/LDL9jNQW/REI.jpg">REI</option>
-                <option value="RUX|https://i.ibb.co/BHNLGXPz/RUX.png">RUX</option>
-                <option value="SPL|https://i.ibb.co/VYgHhZhh/SPL.png">SPL</option>
-                <option value="SPR|https://i.ibb.co/whwfwkw4/SPR.png">SPR</option>
-                <option value="TNF|https://i.ibb.co/TDgQRGtM/TNF.png">TNF</option>
-                <option value="YET|https://i.ibb.co/4ZCck2X9/YET.png">YET</option>
+                <option value="BCA|https://i.postimg.cc/h4w977JV/BCA.png">BCA</option>
+                <option value="BLI|https://i.postimg.cc/tRfhVV1d/BLI.png">BLI</option>
+                <option value="GSK|https://i.postimg.cc/1RTpNNgw/GSK.png">GSK</option>
+                <option value="HAR|https://i.postimg.cc/wTmD5TJ7/HAR.png">HAR</option>
+                <option value="KUU|https://i.postimg.cc/gkZ3ykRw/KUU.png">KUU</option>
+                <option value="LLM|https://i.postimg.cc/QxTcgx5p/LLM.png">LLM</option>
+                <option value="LSV|https://i.postimg.cc/VLCX9LMq/LSV.png">LSV</option>
+                <option value="MEC|https://i.postimg.cc/28Znd8vF/MEC.png">MEC</option>
+                <option value="MUT|https://i.postimg.cc/KvMt7vLp/MUT.png">MUT</option>
+                <option value="MDK|https://i.postimg.cc/X7C9K7F8/MDK.png">MDK</option>
+                <option value="ONR|https://i.postimg.cc/X7C9K7F2/ONR.png">ONR</option>
+                <option value="OSP|https://i.postimg.cc/Wbk0mbrf/OSP.png">OSP</option>
+                <option value="OVX|https://i.postimg.cc/J4kj34Jv/OVX.png">OVX</option>
+                <option value="PK|https://i.postimg.cc/J4kj34JS/PK.png">PK</option>
+                <option value="RAP|https://i.postimg.cc/Njvmdq7p/RAP.png">RAP</option>
+                <option value="REI|https://i.postimg.cc/wjYLw8cb/REI.png">REI</option>
+                <option value="RUX|https://i.postimg.cc/Dw3Lxkdx/RUX.png">RUX</option>
+                <option value="SPL|https://i.postimg.cc/zGYKxZSd/SPL.png">SPL</option>
+                <option value="SPR|https://i.postimg.cc/9QHZL5tk/SPR.png">SPR</option>
+                <option value="TNF|https://i.postimg.cc/FHX3T5g2/TNF.png">TNF</option>
+                <option value="YET|https://i.postimg.cc/ZnG9Cp5r/YET.png">YET</option>
             </select>
             <div class="logo-or">— hoặc nhập link / tải file —</div>
             <div class="logo-input-row">
@@ -437,12 +499,18 @@
 
 <script>
 // ===================== CONFIG =====================
+const WORKER_REMOVE_BG_URL = 'https://removebg-proxy.chiscoong-cloudflare-com.workers.dev/';
 var CONFIG = { WORKER_URL: "https://mes-proxy.vercel.app/api" };
 var reqCount = 0;
 var userToken = localStorage.getItem("mes_token") || "";
 var currentStyleName = "";
 var currentBuyer = "";
 var bgRemoveFn = null;
+var RECENT_STYLES_KEY = "recent_styles";
+var recentStyles = [];
+
+// Rmbg Method state
+var rmbgMethod = "imgly";
 
 // Logo state
 var _logoDataUrl = null;
@@ -451,33 +519,35 @@ var _previewData = {};
 
 // BUYER_LOGOS map
 var BUYER_LOGOS = {
-    "BCA":    "https://i.ibb.co/1YZZty36/BCA.png",
-    "BLI":    "https://i.ibb.co/kvG7F6c/BLI.jpg",
-    "GSK":    "https://i.ibb.co/Lz0L60sG/GSK.png",
-    "HAR":    "https://i.ibb.co/KjNy73Dp/HAR.png",
-    "KUU":    "https://i.ibb.co/W42DwC6f/KUU.jpg",
-    "LLM":    "https://i.ibb.co/YT7HwLsy/LLM.png",
-    "LSV":    "https://i.ibb.co/844BdWkv/LSV.png",
-    "MEC":    "https://i.ibb.co/WWSzTGkT/MEC.png",
-    "MUT":    "https://i.ibb.co/ZpBzGhSD/MUT.png",
-    "MDK":    "https://i.ibb.co/C3HwjpNy/MDK.png",
-    "ONR":    "https://i.ibb.co/ZR97z65C/ONR.png",
-    "OSP":    "https://i.ibb.co/LXW3KY0T/OSP.png",
-    "OVX":    "https://i.ibb.co/gZ8KwX8S/OVX.jpg",
-    "PK":     "https://i.ibb.co/G4Y5mnvg/PK.png",
-    "RAP":    "https://i.ibb.co/qYHdcndv/RAP.png",
-    "REI":    "https://i.ibb.co/LDL9jNQW/REI.jpg",
-    "RUX":    "https://i.ibb.co/BHNLGXPz/RUX.png",
-    "SPL":    "https://i.ibb.co/VYgHhZhh/SPL.png",
-    "SPR":    "https://i.ibb.co/whwfwkw4/SPR.png",
-    "TNF":    "https://i.ibb.co/TDgQRGtM/TNF.png",
-    "YET":    "https://i.ibb.co/4ZCck2X9/YET.png"
+    "BCA":    "https://i.postimg.cc/h4w977JV/BCA.png",
+    "BLI":    "https://i.postimg.cc/tRfhVV1d/BLI.png",
+    "GSK":    "https://i.postimg.cc/1RTpNNgw/GSK.png",
+    "HAR":    "https://i.postimg.cc/wTmD5TJ7/HAR.png",
+    "KUU":    "https://i.postimg.cc/gkZ3ykRw/KUU.png",
+    "LLM":    "https://i.postimg.cc/QxTcgx5p/LLM.png",
+    "LSV":    "https://i.postimg.cc/VLCX9LMq/LSV.png",
+    "MEC":    "https://i.postimg.cc/28Znd8vF/MEC.png",
+    "MUT":    "https://i.postimg.cc/KvMt7vLp/MUT.png",
+    "MDK":    "https://i.postimg.cc/X7C9K7F8/MDK.png",
+    "ONR":    "https://i.postimg.cc/X7C9K7F2/ONR.png",
+    "OSP":    "https://i.postimg.cc/Wbk0mbrf/OSP.png",
+    "OVX":    "https://i.postimg.cc/J4kj34Jv/OVX.png",
+    "PK":     "https://i.postimg.cc/J4kj34JS/PK.png",
+    "RAP":    "https://i.postimg.cc/Njvmdq7p/RAP.png",
+    "REI":    "https://i.postimg.cc/wjYLw8cb/REI.png",
+    "RUX":    "https://i.postimg.cc/Dw3Lxkdx/RUX.png",
+    "SPL":    "https://i.postimg.cc/zGYKxZSd/SPL.png",
+    "SPR":    "https://i.postimg.cc/9QHZL5tk/SPR.png",
+    "TNF":    "https://i.postimg.cc/FHX3T5g2/TNF.png",
+    "YET":    "https://i.postimg.cc/ZnG9Cp5r/YET.png"
 };
 
 // ===================== INIT =====================
 document.addEventListener("DOMContentLoaded", function() {
     checkAuth();
     loadSavedLogo();
+    recentStyles = loadRecentStyles();
+    renderRecentList();
 
     document.getElementById("searchType").addEventListener("change", handleInputSwitch);
     document.getElementById("searchBtn").addEventListener("click", doSearch);
@@ -487,6 +557,7 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("importBuyer").addEventListener("blur", autoMatchLogoFromImportBuyer);
     document.addEventListener("keypress", function(e) { if(e.key === "Enter") doSearch(); });
     document.getElementById("logoutBtn").addEventListener("click", logout);
+    document.getElementById("clearRecentBtn").addEventListener("click", clearRecentStyles);
 
     // Tabs
     document.querySelectorAll(".tab").forEach(function(btn) {
@@ -671,13 +742,45 @@ function loadBgRemovalFallback() {
 }
 
 // ===================== REMOVE BACKGROUND =====================
+function changeRmbgMethod(method) {
+    rmbgMethod = method;
+    document.getElementById("imglyDesc").style.display = (method === "imgly") ? "block" : "none";
+    document.getElementById("removebgDesc").style.display = (method === "removebg") ? "block" : "none";
+}
+
+async function callRemoveBgApi(imageBlob) {
+    var formData = new FormData();
+    formData.append('size', 'auto');
+    formData.append('image_file', imageBlob);
+    
+    var res = await fetch(WORKER_REMOVE_BG_URL, {
+        method: 'POST',
+        body: formData
+    });
+    
+    if (!res.ok) {
+        var errorMsg = "Lỗi Proxy API: " + res.status;
+        try {
+            var errJson = await res.json();
+            if (errJson.errors && errJson.errors.length > 0) {
+                errorMsg = errJson.errors[0].title || errJson.errors[0].message || JSON.stringify(errJson.errors);
+            } else if (errJson.error) {
+                errorMsg = errJson.error;
+            }
+        } catch(e) {}
+        throw new Error(errorMsg);
+    }
+    
+    return await res.blob();
+}
+
 async function doRemoveBg(btn) {
     var card = btn.closest(".img-card");
     var imageUrl = btn.dataset.imgUrl;
     var styleName = btn.dataset.styleName;
     var fileName = btn.dataset.fileName;
 
-    if (!bgRemoveFn) { alert("⏳ Model AI chưa sẵn sàng, thử lại sau vài giây!"); return; }
+    if (rmbgMethod === "imgly" && !bgRemoveFn) { alert("⏳ Model AI chưa sẵn sàng, thử lại sau vài giây!"); return; }
 
     var progressWrap = card.querySelector(".rmbg-progress");
     var bar = card.querySelector(".rmbg-progress-bar");
@@ -695,19 +798,25 @@ async function doRemoveBg(btn) {
         var imgRes = await fetch(imageUrl, { headers: { "x-access-token": userToken } });
         if (!imgRes.ok) throw new Error("Không tải được ảnh (lỗi " + imgRes.status + ")");
         var imgBlob = await imgRes.blob();
+        var resultBlob;
 
-        setP(30, "🤖 AI đang xóa nền...");
-        var config = {
-            model: "small",
-            output: { format: "image/png", type: "foreground" },
-            progress: function(key, current, total) {
-                if (total > 0) {
-                    var pct = Math.round((current/total)*50)+30;
-                    setP(Math.min(pct,80), "⬇️ " + Math.round(current/1024/1024) + "/" + Math.round(total/1024/1024) + "MB");
+        if (rmbgMethod === "imgly") {
+            setP(30, "🤖 AI đang xóa nền (imgly)...");
+            var config = {
+                model: "small",
+                output: { format: "image/png", type: "foreground" },
+                progress: function(key, current, total) {
+                    if (total > 0) {
+                        var pct = Math.round((current/total)*50)+30;
+                        setP(Math.min(pct,80), "⬇️ " + Math.round(current/1024/1024) + "/" + Math.round(total/1024/1024) + "MB");
+                    }
                 }
-            }
-        };
-        var resultBlob = await bgRemoveFn(imgBlob, config);
+            };
+            resultBlob = await bgRemoveFn(imgBlob, config);
+        } else {
+            setP(50, "🌐 Đang gọi remove.bg API...");
+            resultBlob = await callRemoveBgApi(imgBlob);
+        }
 
         setP(95, "✅ Hoàn thành!");
         setTimeout(function(){ progressWrap.style.display="none"; }, 1000);
@@ -743,14 +852,14 @@ async function doRemoveBg(btn) {
 
             var lbl = document.createElement("div");
             lbl.className = "ai-result-label";
-            lbl.textContent = "🤖 @imgly/background-removal";
+            lbl.textContent = (rmbgMethod === "imgly") ? "🤖 @imgly/background-removal" : "🌐 remove.bg API";
             card.querySelector(".img-info").appendChild(lbl);
         }
 
     } catch(err) {
         progressWrap.style.display = "none";
         btn.disabled = false;
-        btn.innerHTML = "🤖 Xóa nền AI (Miễn phí)";
+        btn.innerHTML = "🤖 Xóa nền AI";
         btn.style.background = "";
         alert("❌ Lỗi: " + err.message);
         console.error(err);
@@ -982,7 +1091,7 @@ function renderImportGrid() {
 }
 
 async function processOneImportBgRemoval(idx, card) {
-    if (!bgRemoveFn) { alert("⏳ Model AI chưa sẵn sàng, thử lại sau vài giây!"); return; }
+    if (rmbgMethod === "imgly" && !bgRemoveFn) { alert("⏳ Model AI chưa sẵn sàng, thử lại sau vài giây!"); return; }
     var item = importFiles[idx];
     var btn = card.querySelector(".btn-rmbg");
     var progress = card.querySelector(".rmbg-progress");
@@ -996,16 +1105,22 @@ async function processOneImportBgRemoval(idx, card) {
     function setP(pct, text) { bar.style.width = pct + "%"; labelEl.textContent = text; }
 
     try {
-        setP(20, "🤖 AI đang xóa nền...");
-        var config = {
-            model: "small",
-            output: { format: "image/png", type: "foreground" },
-            progress: function(key, current, total) {
-                if (total > 0) setP(Math.min(20 + Math.round((current/total)*60), 80),
-                    "⬇️ " + Math.round(current/1024/1024) + "/" + Math.round(total/1024/1024) + "MB");
-            }
-        };
-        var resultBlob = await bgRemoveFn(item.file, config);
+        var resultBlob;
+        if (rmbgMethod === "imgly") {
+            setP(20, "🤖 AI đang xóa nền (imgly)...");
+            var config = {
+                model: "small",
+                output: { format: "image/png", type: "foreground" },
+                progress: function(key, current, total) {
+                    if (total > 0) setP(Math.min(20 + Math.round((current/total)*60), 80),
+                        "⬇️ " + Math.round(current/1024/1024) + "/" + Math.round(total/1024/1024) + "MB");
+                }
+            };
+            resultBlob = await bgRemoveFn(item.file, config);
+        } else {
+            setP(50, "🌐 Đang gọi remove.bg API...");
+            resultBlob = await callRemoveBgApi(item.file);
+        }
         var resultUrl = URL.createObjectURL(resultBlob);
 
         setP(100, "✅ Hoàn thành!");
@@ -1051,6 +1166,11 @@ async function processOneImportBgRemoval(idx, card) {
             dlBtn.href = resultUrl;
             dlBtn.download = safeBase + "_nobg.png";
             card.querySelector(".import-card-info").appendChild(dlBtn);
+            
+            var resLbl = document.createElement("div");
+            resLbl.className = "ai-result-label";
+            resLbl.textContent = (rmbgMethod === "imgly") ? "🤖 @imgly/background-removal" : "🌐 remove.bg API";
+            card.querySelector(".import-card-info").appendChild(resLbl);
         }
 
     } catch(err) {
@@ -1063,7 +1183,7 @@ async function processOneImportBgRemoval(idx, card) {
 }
 
 async function processAllImportBgRemoval() {
-    if (!bgRemoveFn) { alert("⏳ Model AI chưa sẵn sàng!"); return; }
+    if (rmbgMethod === "imgly" && !bgRemoveFn) { alert("⏳ Model AI chưa sẵn sàng!"); return; }
     var pending = importFiles.filter(function(f){ return !f.done; });
     for (var i = 0; i < pending.length; i++) {
         var idx = importFiles.indexOf(pending[i]);
@@ -1084,6 +1204,122 @@ var fmt = {
         return '<span class="badge '+r[0]+'">'+r[1]+'</span>';
     }
 };
+
+// ===================== RECENT STYLES =====================
+function loadRecentStyles() {
+    try {
+        var raw = localStorage.getItem(RECENT_STYLES_KEY);
+        if (!raw) return [];
+        var data = JSON.parse(raw);
+        if (!Array.isArray(data)) return [];
+        return data.filter(function(item) {
+            return item && item.styleCode;
+        }).sort(function(a, b) {
+            return (b.timestamp || 0) - (a.timestamp || 0);
+        }).slice(0, 20);
+    } catch(e) {
+        console.warn("Không đọc được recent_styles:", e);
+        return [];
+    }
+}
+
+function persistRecentStyles() {
+    try {
+        localStorage.setItem(RECENT_STYLES_KEY, JSON.stringify(recentStyles));
+    } catch(e) {
+        console.warn("Không lưu được recent_styles:", e);
+    }
+}
+
+function saveRecentStyle(styleCode, buyer, styleName, buyerStyleCode, buyerStyleName) {
+    styleCode = (styleCode || "").trim().toUpperCase();
+    if (!styleCode) return;
+    var now = Date.now();
+    recentStyles = loadRecentStyles().filter(function(item) {
+        return (item.styleCode || "").toUpperCase() !== styleCode;
+    });
+    recentStyles.unshift({
+        styleCode: styleCode,
+        buyer: buyer || "",
+        styleName: styleName || styleCode,
+        buyerStyleCode: buyerStyleCode || "",
+        buyerStyleName: buyerStyleName || "",
+        timestamp: now
+    });
+    recentStyles = recentStyles.sort(function(a, b) {
+        return (b.timestamp || 0) - (a.timestamp || 0);
+    }).slice(0, 20);
+    persistRecentStyles();
+    renderRecentList();
+}
+
+function renderRecentList() {
+    var wrap = document.getElementById("recentList");
+    if (!wrap) return;
+    var list = recentStyles.slice().sort(function(a, b) {
+        return (b.timestamp || 0) - (a.timestamp || 0);
+    }).slice(0, 10);
+    if (!list.length) {
+        wrap.innerHTML = '<div class="recent-empty">Chưa có style nào được xem.</div>';
+        return;
+    }
+    wrap.innerHTML = list.map(function(item) {
+        var label = item.styleName || item.buyerStyleName || item.buyer || "";
+        return '<button type="button" class="recent-item" data-stylecode="'+escapeHtml(item.styleCode)+'">'+
+            '<div class="recent-main">'+
+                '<span class="recent-code">'+escapeHtml(item.styleCode)+'</span>'+
+                '<span class="recent-name">'+escapeHtml(label)+'</span>'+
+            '</div>'+
+            '<div class="recent-meta">🕒 '+escapeHtml(formatRecentDate(item.timestamp))+(item.buyer ? ' · '+escapeHtml(item.buyer) : '')+'</div>'+
+        '</button>';
+    }).join("");
+    wrap.querySelectorAll(".recent-item").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            openRecentStyle(this.dataset.stylecode);
+        });
+    });
+}
+
+function openRecentStyle(styleCode) {
+    document.getElementById("searchType").value = "style";
+    handleInputSwitch();
+    document.getElementById("styleCode").value = styleCode;
+    activateTab("gallery");
+    doSearch();
+}
+
+function clearRecentStyles() {
+    if (!confirm("Xóa toàn bộ lịch sử đơn hàng gần đây?")) return;
+    recentStyles = [];
+    try {
+        localStorage.removeItem(RECENT_STYLES_KEY);
+    } catch(e) {
+        console.warn("Không xóa được recent_styles:", e);
+    }
+    renderRecentList();
+}
+
+function formatRecentDate(timestamp) {
+    var d = new Date(timestamp || Date.now());
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function escapeHtml(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function(ch) {
+        return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];
+    });
+}
+
+function activateTab(tabName) {
+    var btn = document.querySelector('.tab[data-tab="'+tabName+'"]');
+    var pane = document.getElementById("tab-" + tabName);
+    if (!btn || !pane) return;
+    document.querySelectorAll(".tab").forEach(function(t){ t.classList.remove("active"); });
+    document.querySelectorAll(".tab-pane").forEach(function(p){ p.classList.remove("active"); });
+    btn.classList.add("active");
+    pane.classList.add("active");
+}
 
 // ===================== SEARCH =====================
 async function doSearch() {
@@ -1111,6 +1347,13 @@ async function searchStyle(code) {
     var buyer = styleInfo.BUYER||(packages[0]&&packages[0].BUYER)||code.substring(0,3);
     currentStyleName = styleInfo.STYLENAME||code;
     currentBuyer = buyer;
+    saveRecentStyle(
+        code,
+        buyer,
+        currentStyleName,
+        styleInfo.BUYERSTYLECODE || styleInfo.BUYER_STYLE_CODE || styleInfo.CUSTOMERSTYLECODE || styleInfo.CUSTOMER_STYLE_CODE || "",
+        styleInfo.BUYERSTYLENAME || styleInfo.BUYER_STYLE_NAME || styleInfo.CUSTOMERSTYLENAME || styleInfo.CUSTOMER_STYLE_NAME || ""
+    );
     autoMatchBuyerLogo(buyer);
     render(code, buyer, styleInfo, packages);
 }
@@ -1179,7 +1422,7 @@ function render(styleCode, buyer, info, packages) {
                 '<span class="badge '+( img.type==="Primary"?"badge-success":"badge-warning")+'">'+img.type+'</span>';
 
             var rmbgBtn=document.createElement("button"); rmbgBtn.className="btn-rmbg";
-            rmbgBtn.innerHTML="🤖 Xóa nền AI (Miễn phí)";
+            rmbgBtn.innerHTML="🤖 Xóa nền AI";
             rmbgBtn.dataset.imgUrl=proxiedImg;
             rmbgBtn.dataset.styleName=safeStyle;
             rmbgBtn.dataset.fileName=img.name;
